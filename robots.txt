@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://alergen.airlangga.link/sitemap.xml
