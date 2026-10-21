@@ -1,40 +1,39 @@
-# Alergen — situs informasi patch diagnostik
+# Alergen — situs informasi kit diagnostik alergi patch transdermal
 
-Situs satu halaman (statis) untuk pengembangan **patch diagnostik 10 alergen** dan
-**tablet sublingual desensitisasi**. Konten ditujukan untuk klinisi dan mitra; tidak ada
-penjualan online.
+Situs satu halaman (statis) untuk **kit diagnostik alergi berbasis patch transdermal**
+Universitas Airlangga: sepuluh jenis ekstrak alergen dalam satu sistem patch (patch + seal).
+Produk dalam pengembangan; validasi klinis masih diperlukan. Tidak ada penjualan online.
 
 Live: https://alergen.airlangga.link
 
 ## Struktur
 
 ```
-index.html        halaman utama (dibangun oleh _build_html.py)
+index.html        halaman utama (SUMBER TUNGGAL — edit langsung)
 404.html          halaman error
 favicon.svg       ikon
 robots.txt        izin crawler + sitemap
 sitemap.xml       satu URL
-images/           7 foto produk (.webp)
+images/           6 foto produk (.webp)
 nginx.conf        konfigurasi server (gzip, cache, security header)
 Dockerfile        nginx:1.27-alpine + aset statis
 build.sh          build + smoke test (satu-satunya bukti verifikasi)
 ```
 
-## Shell HTML dibangun oleh script
+## Sumber tunggal: index.html
 
-Fragmen asli dari desain tidak punya `<!DOCTYPE>`, `<head>`, maupun `<meta viewport>` —
-di ponsel halaman akan ter-render sebagai desktop. `_build_html.py` membungkus fragmen itu
-menjadi dokumen HTML5 lengkap (charset, viewport, canonical, Open Graph, JSON-LD, favicon)
-plus dua perbaikan CSS:
+Tidak ada lagi langkah generate (`_build_html.py` sudah dihapus; fragmen asal
+`/tmp/index.orig.html` sudah tidak ada). `index.html` adalah dokumen HTML5 lengkap
+yang diedit langsung:
 
-- `[hidden] { display: none !important }` — tanpa ini filter produk tidak menyembunyikan
-  kartu, karena `.kit { display: grid }` mengalahkan `[hidden]` bawaan browser.
-- nav mobile: brand + tombol satu baris, tautan jadi strip yang bisa digeser.
+- konten mengikuti dokumen "Konten Web" (BRIEF-konten-v2.md) — jangan menambah
+  klaim, angka pasar, atau tautan riset eksternal di luar dokumen itu;
+- selalu tegaskan bahwa validasi klinis belum ada;
+- tidak ada produk lain: hanya kit patch transdermal (patch + seal).
 
-Sumber fragmen: `/tmp/index.orig.html` (ekstrak zip awal). Setelah mengubah `_build_html.py`:
+Setelah mengubah `index.html`:
 
 ```bash
-python3 _build_html.py   # tulis ulang index.html
 ./build.sh               # build image + sweep rute + assertion konten
 ```
 
@@ -47,11 +46,15 @@ python3 _build_html.py   # tulis ulang index.html
 | `/`, `/index.html` | 200 |
 | `/healthz` | 200 |
 | `/robots.txt`, `/sitemap.xml`, `/favicon.svg` | 200 |
-| `/images/*.webp` | 200 |
+| `/images/*.webp` (6 gambar) | 200 |
 | `/halaman-tidak-ada` | 404 (memakai `404.html`) |
 | `/404.html` | 404 (internal saja, mencegah konten duplikat) |
 
-Plus assertion konten: doctype, `lang="id"`, viewport, judul hero, canonical, JSON-LD.
+Plus assertion konten: doctype, `lang="id"`, viewport, judul
+"Kit Diagnostik Alergi Berbasis Patch Transdermal", "Sepuluh jenis ekstrak alergen",
+"Tim inventor", "Junaidi Khotib", "PT Bio Farma", "CD209", "validasi klinis",
+canonical, JSON-LD — dan larangan munculnya "Tablet sublingual", "SLIT",
+"Grand View", "Panel alergen", "HPMC", "Mordor", `tablet.webp`.
 
 ## Deploy
 
@@ -62,6 +65,7 @@ coolify-deploy git@github.com:zaidan33/alergen-site.git alergen \
 
 ## Catatan medis
 
-Halaman menyatakan produk masih dalam pengembangan, patch adalah alat bantu (bukan
-pengganti uji tusuk kulit, IgE, atau uji provokasi oral), dan tablet tidak dijual online.
-Klaim pasar mencantumkan sumbernya masing-masing di footer.
+Halaman menyatakan produk masih dalam pengembangan dan belum tersedia untuk
+penjualan, penelitian awal berupa respons imun in vitro (belum menetapkan akurasi
+diagnostik maupun keamanan klinis), dan informasi halaman bukan saran medis serta
+bukan klaim izin edar.

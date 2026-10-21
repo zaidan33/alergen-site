@@ -35,6 +35,11 @@ check /sitemap.xml 200
 check /favicon.svg 200
 check /404.html 404   # internal-only error document (deliberate: no duplicate content)
 check /images/hero-patch.webp 200
+check /images/patch-atas.webp 200
+check /images/patch-samping.webp 200
+check /images/patch-miring.webp 200
+check /images/detail-makro.webp 200
+check /images/cta-gelap.webp 200
 check /halaman-tidak-ada 404
 
 echo "==> content assertions"
@@ -43,11 +48,17 @@ python3 - <<'PY'
 import sys
 h = open('/tmp/alergen-index.html', encoding='utf-8').read()
 need = ['<!DOCTYPE html>', '<html lang="id">', 'width=device-width',
-        'Sepuluh alergen, satu patch', 'Panel alergen', 'rel="canonical"',
-        'application/ld+json', '[hidden] { display: none !important; }']
+        'Kit Diagnostik Alergi Berbasis Patch Transdermal',
+        'Sepuluh jenis ekstrak alergen', 'Tim inventor', 'Junaidi Khotib',
+        'PT Bio Farma', 'CD209', 'validasi klinis',
+        'rel="canonical"', 'application/ld+json', '[hidden] { display: none !important; }']
+ban = ['Tablet sublingual', 'SLIT', 'Grand View', 'Panel alergen',
+       'HPMC', 'Mordor', 'tablet.webp']
 missing = [n for n in need if n not in h]
-print("  ok   html shell + content" if not missing else f"  FAIL missing: {missing}")
-sys.exit(1 if missing else 0)
+found = [b for b in ban if b in h]
+print("  ok   html shell + content" if not missing and not found
+      else f"  FAIL missing: {missing}; banned present: {found}")
+sys.exit(1 if missing or found else 0)
 PY
 
 echo "==> asset count in image"
