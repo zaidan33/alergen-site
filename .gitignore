@@ -1,5 +1,6 @@
 .env
 .env.*
 *.zip
+!ipa/dokumen/Alergen_Dokumen_Pendukung.zip
 __pycache__/
 /var/
