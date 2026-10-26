@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Alergen · Dokumen Pendukung</title>
+<meta name="description" content="Kit diagnostik alergi berbasis patch dengan sepuluh alergen. Spesifikasi, aplikasi pembaca, CoA, dokumen produksi, studi kelayakan, dampak, dan daftar pustaka.">
+<meta name="theme-color" content="#0A6C6E">
+<meta property="og:title" content="Alergen · Kit Diagnostik Alergi Berbasis Patch">
+<meta property="og:description" content="Dokumen pendukung produk: spesifikasi, mutu, produksi, kelayakan, dampak, dan rujukan.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="id_ID">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="assets/fonts/schibsted-grotesk-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:"Public Sans";font-weight:400;font-display:swap;src:url(assets/fonts/public-sans-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Public Sans";font-weight:600;font-display:swap;src:url(assets/fonts/public-sans-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Schibsted Grotesk";font-weight:600;font-display:swap;src:url(assets/fonts/schibsted-grotesk-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Schibsted Grotesk";font-weight:700;font-display:swap;src:url(assets/fonts/schibsted-grotesk-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-weight:500;font-display:swap;src:url(assets/fonts/ibm-plex-mono-latin-500-normal.woff2) format("woff2")}
+:root{
+  --bg:#F2F6F5;--surface:#FFFFFF;--fg:#13262A;--muted:#51666A;--line:#D3DEDC;
+  --accent:#0A6C6E;--accent-fg:#FFFFFF;--pill:#E3EEEC;--well:#CFE3E0;--well-line:#9DBDB8;
+  --font-display:"Schibsted Grotesk","Helvetica Neue",Arial,sans-serif;
+  --font-body:"Public Sans","Helvetica Neue",Arial,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0E1A1C;--surface:#152427;--fg:#E4EEEC;--muted:#9DB2B0;--line:#26393C;
+  --accent:#5DC8BF;--accent-fg:#06201F;--pill:#1D3033;--well:#22393B;--well-line:#3F6266;color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.55;
+  padding-block:28px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:720px;margin-inline:auto;display:flex;flex-direction:column;gap:30px}
+header{display:flex;flex-direction:column;gap:14px}
+.patch{width:148px;height:auto;display:block}
+.patch rect{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.patch circle{fill:var(--well);stroke:var(--well-line);stroke-width:1.2}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0}
+h1{font-family:var(--font-display);font-weight:700;font-size:28px;line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.sub{margin:0;color:var(--muted);max-width:56ch}
+.ident{font-family:var(--font-mono);font-size:12.5px;color:var(--muted);margin:0;overflow-wrap:anywhere}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:4px 0 0;padding:0;list-style:none}
+.facts li{display:block;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.facts b{display:block;font-family:var(--font-display);font-size:22px;line-height:1.1;color:var(--accent)}
+.facts span{font-size:12.5px;color:var(--muted)}
+.all{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+section{display:flex;flex-direction:column;gap:10px}
+h2{font-family:var(--font-display);font-weight:600;font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0;padding-bottom:8px;border-bottom:1px solid var(--line)}
+ul.docs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+ul.docs>li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;
+  grid-template-columns:auto minmax(0,1fr);column-gap:12px;row-gap:10px;scroll-margin-top:16px}
+ul.docs>li:target{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}
+.code{font-family:var(--font-mono);font-weight:500;font-size:13px;color:var(--accent);padding-top:2px}
+.body{min-width:0;display:flex;flex-direction:column;gap:4px}
+h3{font-family:var(--font-display);font-weight:600;font-size:16.5px;line-height:1.3;margin:0}
+.desc{margin:0;color:var(--muted);font-size:14px}
+.tags{margin:4px 0 0;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.tag{font-size:11.5px;font-weight:600;background:var(--pill);color:var(--fg);padding:2px 9px;border-radius:99px}
+.meta{font-size:12.5px;color:var(--muted)}
+.act{grid-column:2;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+a{color:var(--accent)}
+.open,.alt,.dl{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 16px;font-weight:600;font-size:14px;border-radius:8px;text-decoration:none}
+.open,.dl{background:var(--accent);color:var(--accent-fg)}
+.alt{color:var(--fg);border:1px solid var(--line);background:transparent;font-weight:500}
+.open:hover,.dl:hover{filter:brightness(1.08)}
+.alt:hover{border-color:var(--accent);color:var(--accent)}
+a:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+.shots{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 12px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.shots:focus-visible{outline:3px solid var(--fg);outline-offset:2px;border-radius:8px}
+.shots figure{margin:0;flex:0 0 150px;scroll-snap-align:start;display:flex;flex-direction:column;gap:6px}
+.shots img{width:150px;height:auto;aspect-ratio:390/844;border-radius:14px;border:1px solid var(--line);background:var(--surface);display:block}
+.shots figcaption{font-size:12px;color:var(--muted);line-height:1.35}
+footer{border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:4px;font-size:13.5px;color:var(--muted)}
+footer p{margin:0}
+footer strong{color:var(--fg);font-weight:600}
+.mail{font-family:var(--font-mono);font-size:13px;color:var(--fg);overflow-wrap:anywhere}
+@media (min-width:560px){
+  body{padding-block:44px 56px;font-size:16px}
+  h1{font-size:34px}
+  .facts{grid-template-columns:repeat(4,minmax(0,1fr))}
+  ul.docs>li{grid-template-columns:auto minmax(0,1fr) auto;align-items:center}
+  .act{grid-column:3;justify-content:flex-end}
+  .shots figure,.shots img{flex-basis:168px;width:168px}
+}
+@media print{body{background:#fff;color:#000}.act,.shots,.all{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg class="patch" viewBox="0 0 150 60" role="img" aria-label="Skema patch dengan sepuluh sumur alergen">
+      <rect x="1" y="1" width="148" height="58" rx="9"/>
+      <circle cx="19" cy="19" r="9"/><circle cx="48" cy="19" r="9"/><circle cx="77" cy="19" r="9"/><circle cx="106" cy="19" r="9"/><circle cx="131" cy="19" r="9"/>
+      <circle cx="19" cy="41" r="9"/><circle cx="48" cy="41" r="9"/><circle cx="77" cy="41" r="9"/><circle cx="106" cy="41" r="9"/><circle cx="131" cy="41" r="9"/>
+    </svg>
+    <p class="eyebrow">Alergen · Universitas Airlangga</p>
+    <h1>Kit Diagnostik Alergi Berbasis Patch</h1>
+    <p class="sub">Patch tempel dengan sepuluh ekstrak alergen dan aplikasi pembaca reaksi kulit. Berkas di bawah dapat dibuka langsung atau diunduh.</p>
+    <p class="ident">Paten Sederhana IDS000011522 · Universitas Airlangga</p>
+    <ul class="facts" aria-label="Ringkasan produk">
+      <li><b>10</b><span>ekstrak alergen per patch</span></li>
+      <li><b>2 x 5 cm</b><span>ukuran patch</span></li>
+      <li><b>7 mm</b><span>diameter tiap sumur</span></li>
+      <li><b>48 sampai 96</b><span>jam, jendela pembacaan reaksi</span></li>
+    </ul>
+    <div class="all">
+      <a class="dl" href="dokumen/Alergen_Dokumen_Pendukung.zip" download>Unduh semua PDF (7 berkas, zip)</a>
+    </div>
+  </header>
+
+  <section aria-labelledby="g1">
+    <h2 id="g1">Dasar paten</h2>
+    <ul class="docs">
+      <li id="d01">
+        <span class="code">D01</span>
+        <div class="body">
+          <h3>Sertifikat Paten Sederhana</h3>
+          <p class="desc">IDS000011522, permohonan S00202208501. Diterima 11 Agustus 2022, diberikan 14 Oktober 2025.</p>
+          <p class="tags"><span class="tag">Kebaruan</span><span class="meta">Tersedia atas permintaan</span></p>
+        </div>
+        <div class="act"><a class="open" href="mailto:info@alergen.unair.ac.id?subject=Permintaan%20D01:%20Sertifikat%20Paten%20Sederhana" aria-label="Minta Salinan sertifikat">Minta berkas</a></div>
+      </li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="g2">
+    <h2 id="g2">Produk dan prototipe</h2>
+    <ul class="docs">
+      <li id="d02">
+        <span class="code">D02</span>
+        <div class="body">
+          <h3>Spesifikasi produk</h3>
+          <p class="desc">Patch 2 x 5 cm dengan sepuluh sumur 7 mm, spesifikasi tiap ekstrak, bahan, dan kriteria mutu.</p>
+          <p class="tags"><span class="tag">Produk</span><span class="meta">PDF · 7 halaman · 98 KB</span></p>
+        </div>
+        <div class="act"><a class="open" href="dokumen/Spesifikasi_Produk.pdf" aria-label="Buka Spesifikasi produk (PDF)">Buka</a><a class="alt" href="dokumen/Spesifikasi_Produk.pdf" download>Unduh</a><a class="alt" href="sumber/Spesifikasi_Produk.tex" download>.tex</a></div>
+      </li>
+      <li id="d03">
+        <span class="code">D03</span>
+        <div class="body">
+          <h3>Aplikasi pembaca reaksi kulit</h3>
+          <p class="desc">Dokumentasi teknis dan panduan desain aplikasi Alergen Reader: pembacaan foto patch, pengukuran warna, dan penyaran skor.</p>
+          <p class="tags"><span class="tag">Produk</span><span class="meta">PDF · 22 halaman · 1,6 MB</span></p>
+        </div>
+        <div class="act"><a class="open" href="dokumen/Dokumentasi_Alergen_Reader.pdf" aria-label="Buka Aplikasi pembaca reaksi kulit (PDF)">Buka</a><a class="alt" href="dokumen/Dokumentasi_Alergen_Reader.pdf" download>Unduh</a><a class="alt" href="sumber/Dokumentasi_Alergen_Reader.tex" download>.tex</a></div>
+      </li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="g2b">
+    <h2 id="g2b">Tampilan aplikasi</h2>
+    <div class="shots" role="group" aria-label="Tangkapan layar aplikasi Alergen Reader" tabindex="0">
+        <figure><img src="assets/img/app-beranda.webp" width="390" height="844" loading="lazy" alt="Beranda: tombol pembacaan baru dan ringkasan"><figcaption>Beranda: tombol pembacaan baru dan ringkasan</figcaption></figure>
+        <figure><img src="assets/img/app-hasil.webp" width="390" height="844" loading="lazy" alt="Hasil untuk tenaga kesehatan"><figcaption>Hasil untuk tenaga kesehatan</figcaption></figure>
+        <figure><img src="assets/img/app-sumur.webp" width="390" height="844" loading="lazy" alt="Satu sumur dibuka: metrik dan chip morfologi"><figcaption>Satu sumur dibuka: metrik dan chip morfologi</figcaption></figure>
+        <figure><img src="assets/img/app-hasil-pasien.webp" width="390" height="844" loading="lazy" alt="Hasil untuk pasien, tanpa skor"><figcaption>Hasil untuk pasien, tanpa skor</figcaption></figure>
+        <figure><img src="assets/img/app-riwayat.webp" width="390" height="844" loading="lazy" alt="Riwayat pembacaan"><figcaption>Riwayat pembacaan</figcaption></figure>
+        <figure><img src="assets/img/app-legenda.webp" width="390" height="844" loading="lazy" alt="Legenda skor"><figcaption>Legenda skor</figcaption></figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="g3">
+    <h2 id="g3">Bukti teknis dan mutu</h2>
+    <ul class="docs">
+      <li id="d04">
+        <span class="code">D04</span>
+        <div class="body">
+          <h3>Certificate of Analysis (CoA)</h3>
+          <p class="desc">Hasil analisis sepuluh ekstrak alergen dan batch patch: identitas, protein, potensi, mikrobiologi, dan endotoksin.</p>
+          <p class="tags"><span class="tag">Mutu</span><span class="meta">PDF · 18 halaman · 175 KB</span></p>
+        </div>
+        <div class="act"><a class="open" href="dokumen/CoA_Alergen.pdf" aria-label="Buka Certificate of Analysis (CoA) (PDF)">Buka</a><a class="alt" href="dokumen/CoA_Alergen.pdf" download>Unduh</a><a class="alt" href="sumber/CoA_Alergen.tex" download>.tex</a></div>
+      </li>
+      <li id="d05">
+        <span class="code">D05</span>
+        <div class="body">
+          <h3>Dokumen teknis produksi</h3>
+          <p class="desc">Alur proses, bahan, prosedur kerja, catatan batch, dan titik kendali mutu.</p>
+          <p class="tags"><span class="tag">Mutu</span><span class="meta">PDF · 15 halaman · 146 KB</span></p>
+        </div>
+        <div class="act"><a class="open" href="dokumen/Dokumen_Produksi.pdf" aria-label="Buka Dokumen teknis produksi (PDF)">Buka</a><a class="alt" href="dokumen/Dokumen_Produksi.pdf" download>Unduh</a><a class="alt" href="sumber/Dokumen_Produksi.tex" download>.tex</a></div>
+      </li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="g4">
+    <h2 id="g4">Hilirisasi dan dampak</h2>
+    <ul class="docs">
+      <li id="d06">
+        <span class="code">D06</span>
+        <div class="body">
+          <h3>Dokumen kerja sama industri</h3>
+          <p class="desc">Surat minat atau nota kesepahaman dengan mitra produksi.</p>
+          <p class="tags"><span class="tag">Hilirisasi</span><span class="meta">Tersedia atas permintaan</span></p>
+        </div>
+        <div class="act"><a class="open" href="mailto:info@alergen.unair.ac.id?subject=Permintaan%20D06:%20Dokumen%20kerja%20sama%20industri" aria-label="Minta Dokumen kerja sama">Minta berkas</a></div>
+      </li>
+      <li id="d07">
+        <span class="code">D07</span>
+        <div class="body">
+          <h3>Studi kelayakan</h3>
+          <p class="desc">Pasar, simulasi penjualan, titik impas, dan asumsi yang dipakai pada skala nasional.</p>
+          <p class="tags"><span class="tag">Hilirisasi</span><span class="meta">PDF · 15 halaman · 138 KB</span></p>
+        </div>
+        <div class="act"><a class="open" href="dokumen/Studi_Kelayakan_Nasional.pdf" aria-label="Buka Studi kelayakan (PDF)">Buka</a><a class="alt" href="dokumen/Studi_Kelayakan_Nasional.pdf" download>Unduh</a><a class="alt" href="sumber/Studi_Kelayakan_Nasional.tex" download>.tex</a></div>
+      </li>
+      <li id="d08">
+        <span class="code">D08</span>
+        <div class="body">
+          <h3>Dampak ekonomi dan sosial</h3>
+          <p class="desc">Beban alergi, jalur pengurangan beban, dan indikator yang akan diukur.</p>
+          <p class="tags"><span class="tag">Dampak</span><span class="meta">PDF · 12 halaman · 124 KB</span></p>
+        </div>
+        <div class="act"><a class="open" href="dokumen/Dampak_Ekonomi_Sosial_Nasional.pdf" aria-label="Buka Dampak ekonomi dan sosial (PDF)">Buka</a><a class="alt" href="dokumen/Dampak_Ekonomi_Sosial_Nasional.pdf" download>Unduh</a><a class="alt" href="sumber/Dampak_Ekonomi_Sosial_Nasional.tex" download>.tex</a></div>
+      </li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="g5">
+    <h2 id="g5">Rujukan</h2>
+    <ul class="docs">
+      <li id="d09">
+        <span class="code">D09</span>
+        <div class="body">
+          <h3>Daftar pustaka terpadu</h3>
+          <p class="desc">Seluruh sumber yang dikutip pada dokumen D02 sampai D08, dikelompokkan menurut topik.</p>
+          <p class="tags"><span class="tag">Rujukan</span><span class="meta">PDF · 8 halaman · 81 KB</span></p>
+        </div>
+        <div class="act"><a class="open" href="dokumen/Daftar_Pustaka_Terpadu.pdf" aria-label="Buka Daftar pustaka terpadu (PDF)">Buka</a><a class="alt" href="dokumen/Daftar_Pustaka_Terpadu.pdf" download>Unduh</a><a class="alt" href="sumber/Daftar_Pustaka_Terpadu.tex" download>.tex</a></div>
+      </li>
+    </ul>
+  </section>
+
+  <footer>
+    <p><strong>Alergen · Universitas Airlangga, Surabaya</strong></p>
+    <p>Pertanyaan dan permintaan berkas: <a class="mail" href="mailto:info@alergen.unair.ac.id">info@alergen.unair.ac.id</a></p>
+    <p>Diperbarui 27 Oktober 2026</p>
+  </footer>
+</div>
+</body>
+</html>
