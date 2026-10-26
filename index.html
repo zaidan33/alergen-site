@@ -158,6 +158,12 @@ h1, h2, h3 { margin: 0; font-weight: 300; letter-spacing: -0.02em; text-wrap: ba
 .comp h3 { font-size: 1.2rem; font-weight: 400; letter-spacing: -0.01em; margin-top: 10px; }
 .comp p { margin-top: 10px; font-size: 14px; color: var(--muted); max-width: 46ch; }
 .wide { margin-top: 56px; } .wide .slot { aspect-ratio: 21 / 9; background: var(--soft); }
+
+.videobox { margin-top: 44px; }
+.videobox video { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 16px; background: #101516; object-fit: cover; }
+.videometa { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px 22px; color: var(--muted); font-family: var(--f-mono); font-size: 11px; letter-spacing: .04em; }
+.videometa a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.videometa a:hover { color: var(--ink); }
 .steps { list-style: none; margin: 28px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--line); }
 .steps li { padding: 24px 24px 8px 0; display: grid; gap: 8px; align-content: start; }
 .steps li + li { padding-left: 24px; border-left: 1px solid var(--line); }
@@ -469,6 +475,18 @@ section[id], footer[id] { scroll-margin-top: 16px; }
         <div class="note">
           <span class="mono">Batas pengetahuan saat ini</span>
           <p>Lama aplikasi, waktu pembacaan, kriteria hasil, dan prosedur keselamatan perlu ditetapkan melalui penelitian serta validasi klinis.</p>
+        </div>
+
+        <div id="video">
+          <h3 class="subhead">Video kit</h3>
+          <div class="videobox">
+            <video controls preload="none" playsinline poster="media/alergen-video-poster.jpg">
+              <source src="media/alergen-video-1080.mp4" type="video/mp4">
+              <source src="media/alergen-video-720.mp4" type="video/mp4">
+              <p>Peramban ini belum mendukung pemutar video. <a href="media/alergen-video-720.mp4">Unduh video MP4 720p</a>.</p>
+            </video>
+            <p class="videometa"><span>Durasi 5:27</span><span>MP4 · H.264 · 1080p dan 720p</span><a href="media/alergen-video-1080.mp4">Unduh versi 1080p</a></p>
+          </div>
         </div>
       </div>
     </div>
