@@ -5,4 +5,5 @@ build.sh
 README.md
 _build_html.py
 *.zip
+!ipa/dokumen/*.zip
 .env*
