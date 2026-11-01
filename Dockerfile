@@ -10,6 +10,9 @@ COPY images/ /usr/share/nginx/html/images/
 # Dapat dicabut kembali dengan menghapus baris COPY di bawah dan folder ipa/.
 COPY ipa/ /usr/share/nginx/html/ipa/
 
+# Prototipe asisten pengunjung untuk booth expo (tidak ditautkan dari beranda).
+COPY expo/ /usr/share/nginx/html/expo/
+
 RUN nginx -t
 
 EXPOSE 80

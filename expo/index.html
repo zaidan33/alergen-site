@@ -1,0 +1,1620 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-block:env(safe-area-inset-top,0px) env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Alergen Expo — Asisten Pengunjung</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#eef4f2">
+<meta name="description" content="Prototipe asisten pengunjung booth Alergen: tanya jawab, mengenali patch 10 alergen, kuis singkat, dan mode suara.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: satu kolom setinggi layar (header, tab, area kerja, kotak ketik). Motif utama: patch 2 x 5 cm dengan 10 sumur. */
+:root{
+  --bg:#eef4f2;
+  --surface:#ffffff;
+  --ink:#0c2624;
+  --ink2:#4b6360;
+  --line:#d3e0dd;
+  --accent:#00796b;
+  --accent-ink:#ffffff;
+  --accent-soft:#d9eeea;
+  --sand:#e6d2ba;
+  --on-sand:#3b2d1c;
+  --alert:#b42318;
+  --alert-soft:#fdecea;
+  --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --f-body:'Public Sans','Segoe UI',system-ui,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b1716;--surface:#122322;--ink:#e7f1ef;--ink2:#9db5b1;--line:#25403d;
+    --accent:#4ccbb8;--accent-ink:#06201c;--accent-soft:#153a35;--sand:#5a4b3a;--on-sand:#f2e4d2;
+    --alert:#ff8a80;--alert-soft:#3a1d1b;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1716;--surface:#122322;--ink:#e7f1ef;--ink2:#9db5b1;--line:#25403d;
+  --accent:#4ccbb8;--accent-ink:#06201c;--accent-soft:#153a35;--sand:#5a4b3a;--on-sand:#f2e4d2;
+  --alert:#ff8a80;--alert-soft:#3a1d1b;color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-block:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.app{height:100%;max-width:780px;margin-inline:auto;display:flex;flex-direction:column;min-height:0}
+
+/* Header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px 12px;flex-wrap:wrap;padding-block:12px 8px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand svg{width:15px;height:38px;flex:none}
+.brand .mark-body{fill:var(--sand)}
+.brand .mark-well{fill:var(--accent)}
+.wordmark{font-family:var(--f-display);font-weight:700;font-size:24px;line-height:1;letter-spacing:-.01em}
+.sub{display:block;font-size:12px;color:var(--ink2);margin-top:3px}
+.proto{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--ink2);color:var(--ink2);padding:2px 6px;border-radius:3px;margin-left:4px;vertical-align:middle}
+.top-actions{display:flex;align-items:center;gap:8px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--surface);overflow:hidden}
+.seg button{border:0;background:transparent;padding:6px 11px;font-size:13px;font-weight:600;color:var(--ink2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.btn-staff{border:0;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:14px;padding:8px 14px;border-radius:999px}
+.btn-staff:hover{filter:brightness(1.07)}
+
+/* Tabs */
+.tabs{display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{background:transparent;border:0;border-bottom:3px solid transparent;padding:10px 14px 9px;font-weight:600;color:var(--ink2);white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab.tim{margin-left:auto;font-size:12.5px;font-weight:500}
+
+.view{flex:1;min-height:0;display:flex;flex-direction:column}
+.scroll{flex:1;min-height:0;overflow-y:auto;padding-block:18px 28px}
+
+/* Chat */
+.rolebar{display:flex;align-items:center;gap:8px;padding-block:10px 0;font-size:13px;color:var(--ink2);flex-wrap:wrap}
+.rolebar b{color:var(--ink);font-weight:600}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font-weight:600;text-decoration:underline;text-underline-offset:3px;font-size:13px}
+.chat{flex:1;min-height:0;overflow-y:auto;padding-block:14px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:92%;padding:12px 14px;border-radius:4px 16px 16px 16px;background:var(--surface);border:1px solid var(--line);min-width:0;overflow-wrap:anywhere}
+.msg p{margin:0}
+.msg p + p{margin-top:8px}
+.msg.user{align-self:flex-end;background:var(--accent);border-color:var(--accent);color:var(--accent-ink);border-radius:16px 4px 16px 16px}
+.msg.alert{background:var(--alert-soft);border-color:var(--alert)}
+.msg.alert .lead{font-weight:600;color:var(--alert)}
+.tech{margin-top:8px;padding:8px 10px;border-radius:8px;background:var(--accent-soft);font-size:13.5px}
+.tech b{display:block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:2px;font-weight:500}
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px}
+.roles button{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:left;font-weight:600}
+.roles button:hover,.roles button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.sources{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:6px}
+.sources .lbl{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.src{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;font-size:12.5px;color:var(--ink2)}
+.src code{font-family:var(--f-mono);font-size:11.5px;color:var(--ink);background:var(--bg);border:1px solid var(--line);padding:1px 5px;border-radius:3px}
+.pill{font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.pill.fact{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.pill.draft{background:var(--sand);border-color:var(--sand);color:var(--on-sand)}
+.pill.todo{border-style:dashed;color:var(--ink2)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn-line{background:var(--surface);border:1px solid var(--accent);color:var(--accent);font-weight:600;font-size:13.5px;padding:7px 12px;border-radius:999px}
+.btn-line:hover{background:var(--accent-soft)}
+.btn-line.danger{border-color:var(--alert);color:var(--alert)}
+.btn-fill{background:var(--accent);border:1px solid var(--accent);color:var(--accent-ink);font-weight:600;font-size:14px;padding:9px 16px;border-radius:999px}
+.typing{display:inline-flex;gap:4px;padding:4px 0}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--ink2);animation:blink 1.1s infinite ease-in-out}
+.typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+@media (prefers-reduced-motion: reduce){.typing i{animation:none;opacity:.6}}
+
+.dock{padding-top:8px;padding-bottom:12px;border-top:1px solid var(--line)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scrollbar-width:thin}
+.chip{flex:none;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13.5px;font-weight:500}
+.chip:hover{border-color:var(--accent);background:var(--accent-soft)}
+.ask{display:flex;gap:8px}
+.ask input{flex:1;min-width:0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-size:16px}
+.ask button{border:0;background:var(--accent);color:var(--accent-ink);font-weight:600;border-radius:12px;padding:0 18px}
+.ask .mic{flex:none;width:46px;padding:0;display:grid;place-items:center;background:var(--surface);color:var(--accent);border:1px solid var(--accent)}
+.ask .mic svg{width:20px;height:20px;fill:currentColor}
+.ask .mic[aria-pressed="true"]{background:var(--alert);border-color:var(--alert);color:var(--accent-ink);animation:pulse 1.3s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 6px var(--alert-soft)}}
+@media (prefers-reduced-motion: reduce){.ask .mic[aria-pressed="true"]{animation:none}}
+.vswitch{margin-left:auto;display:inline-flex;align-items:center;gap:8px;background:none;border:0;padding:0;font-size:13px;color:var(--ink2)}
+.vswitch .trk{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative}
+.vswitch .trk::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface);border:1px solid var(--ink2)}
+.vswitch[aria-checked="true"] .trk{background:var(--accent)}
+.vswitch[aria-checked="true"] .trk::after{left:16px;border-color:var(--accent)}
+.btn-line[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.disc{margin:7px 0 0;font-size:12px;color:var(--ink2)}
+
+/* Kenali */
+h2{font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1.15;margin:0 0 6px;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:600;font-size:17px;margin:0 0 8px;text-wrap:balance}
+.lead2{color:var(--ink2);margin:0 0 18px;max-width:62ch}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:22px;align-items:start}
+.patch{width:100%;max-width:300px;height:auto;display:block;margin-inline:auto}
+.p-body{fill:var(--sand);stroke:var(--line);stroke-width:1.5}
+.p-well{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+.pg{cursor:pointer}
+.pg:hover .p-well{fill:var(--bg)}
+.pg.on .p-well{fill:var(--accent)}
+.p-num{fill:var(--accent);font-family:var(--f-mono);font-size:15px;font-weight:500;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.pg.on .p-num{fill:var(--accent-ink)}
+.pg:focus-visible{outline:none}
+.pg:focus-visible .p-well{stroke-width:5}
+.p-dim{stroke:var(--ink2);stroke-width:1.2;fill:none}
+.p-txt{fill:var(--ink2);font-family:var(--f-body);font-size:13px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card p{margin:0}
+.card p + p{margin-top:8px}
+.wellinfo{min-height:96px}
+.wellinfo .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.flows{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.steps{list-style:none;margin:0;padding:0;counter-reset:s;display:flex;flex-direction:column;gap:10px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start}
+.steps li::before{content:counter(s);width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-family:var(--f-mono);font-size:12.5px;display:grid;place-items:center}
+.note{font-size:12.5px;color:var(--ink2);margin-top:12px}
+
+/* Kuis */
+.qcount{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-bottom:8px}
+.qtext{font-family:var(--f-display);font-weight:600;font-size:19px;line-height:1.3;margin:0 0 14px;text-wrap:balance}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-weight:500}
+.opt:hover:not(:disabled){border-color:var(--accent);background:var(--accent-soft)}
+.opt.right{border-color:var(--accent);background:var(--accent-soft)}
+.opt.wrong{border-color:var(--alert);background:var(--alert-soft)}
+.opt:disabled{cursor:default}
+.expl{margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--accent-soft);font-size:14px}
+.score{font-family:var(--f-display);font-weight:700;font-size:44px;line-height:1;margin:4px 0 8px}
+
+/* Panel tim */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
+.stat{padding:12px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.stat b{display:block;font-family:var(--f-display);font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;color:var(--ink2)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.lst{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.lst li{display:flex;justify-content:space-between;gap:10px;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.lst li span:last-child{font-family:var(--f-mono);font-variant-numeric:tabular-nums;color:var(--ink2);flex:none}
+.tag-ex{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);border:1px dashed var(--ink2);border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:middle}
+.kiosk{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:14px}
+.kiosk input{width:18px;height:18px;accent-color:var(--accent)}
+
+/* Mode suara */
+.btn-voice{border:1px solid var(--accent);background:var(--surface);color:var(--accent);font-weight:600;font-size:14px;padding:7px 12px;border-radius:999px;display:inline-flex;align-items:center;gap:6px}
+.btn-voice svg{width:16px;height:16px;fill:currentColor}
+.btn-voice:hover{background:var(--accent-soft)}
+.vo{position:fixed;inset:0;z-index:50;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
+  padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.vo-exit{align-self:flex-end;background:none;border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;color:var(--ink2)}
+.vo-body{flex:1;min-height:0;overflow-y:auto;width:100%;max-width:640px;margin-inline:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding-block:8px}
+.vo-patch{height:min(34vh,300px);width:auto;max-width:100%;flex:none;cursor:pointer}
+.vo-patch .body{fill:var(--sand);stroke:var(--line);stroke-width:1.5}
+.vo-patch .w{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2;transform-box:fill-box;transform-origin:center}
+.st-listening .w{animation:breathe 2.2s ease-in-out infinite;animation-delay:calc(var(--i) * .12s)}
+.st-thinking .w{animation:sweep 1.1s linear infinite;animation-delay:calc(var(--i) * .1s)}
+.st-speaking .w{fill:var(--accent);animation:talk .8s ease-in-out infinite;animation-delay:calc(var(--i) * .09s)}
+.st-blocked .w{fill:var(--alert-soft);stroke:var(--alert)}
+@keyframes breathe{0%,100%{transform:scale(1);fill:var(--accent-soft)}50%{transform:scale(1.14);fill:var(--accent)}}
+@keyframes sweep{0%,100%{fill:var(--accent-soft)}35%{fill:var(--accent)}}
+@keyframes talk{0%,100%{transform:scale(.92)}50%{transform:scale(1.2)}}
+@media (prefers-reduced-motion: reduce){
+  .st-listening .w,.st-thinking .w,.st-speaking .w{animation:none}
+  .st-listening .w{fill:var(--accent)}
+  .st-thinking .w{fill:var(--sand)}
+}
+.vo-status{font-family:var(--f-display);font-weight:700;font-size:26px;line-height:1.15;margin:0}
+.vo-you{margin:0;min-height:1.4em;font-size:18px;color:var(--ink2);overflow-wrap:anywhere}
+.vo-bot{width:100%;max-height:30vh;overflow-y:auto;text-align:left;font-size:18px;line-height:1.5;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;overflow-wrap:anywhere}
+.vo-bot p{margin:0}
+.vo-hint{margin:0;font-size:15px;color:var(--ink2);max-width:46ch}
+.vo-start{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.vo-start .btn-fill{font-size:18px;padding:14px 22px}
+.vo-demo{width:100%;border-top:1px dashed var(--line);padding-top:12px}
+.vo-demo .lbl{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);display:block;margin-bottom:8px}
+.vo-demo .row{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+
+/* Sheet dan toast */
+.scrim{position:fixed;inset:0;background:rgba(6,20,19,.55);display:grid;place-items:center;padding:16px;z-index:30}
+.sheet{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:20px;max-width:420px;width:100%}
+.sheet p{margin:0 0 14px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 96px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;max-width:calc(100% - 32px);z-index:40;text-align:center}
+</style>
+
+</head><body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 20 50" aria-hidden="true">
+        <rect class="mark-body" x="1" y="1" width="18" height="48" rx="4"/>
+        <circle class="mark-well" cx="6.5" cy="9" r="3.2"/><circle class="mark-well" cx="13.5" cy="9" r="3.2"/>
+        <circle class="mark-well" cx="6.5" cy="17" r="3.2"/><circle class="mark-well" cx="13.5" cy="17" r="3.2"/>
+        <circle class="mark-well" cx="6.5" cy="25" r="3.2"/><circle class="mark-well" cx="13.5" cy="25" r="3.2"/>
+        <circle class="mark-well" cx="6.5" cy="33" r="3.2"/><circle class="mark-well" cx="13.5" cy="33" r="3.2"/>
+        <circle class="mark-well" cx="6.5" cy="41" r="3.2"/><circle class="mark-well" cx="13.5" cy="41" r="3.2"/>
+      </svg>
+      <div>
+        <span class="wordmark">Alergen</span><span class="proto" data-t="proto"></span>
+        <span class="sub" data-t="sub"></span>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div class="seg" role="group" aria-label="Bahasa / Language">
+        <button type="button" id="lang-id" aria-pressed="true">ID</button>
+        <button type="button" id="lang-en" aria-pressed="false">EN</button>
+      </div>
+      <button type="button" class="btn-voice" id="btn-voice"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg><span data-t="voiceBtn"></span></button>
+      <button type="button" class="btn-staff" id="btn-staff" data-t="staff"></button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button type="button" class="tab" role="tab" id="tab-tanya" data-view="tanya" data-t="tabAsk"></button>
+    <button type="button" class="tab" role="tab" id="tab-kenali" data-view="kenali" data-t="tabExplore"></button>
+    <button type="button" class="tab" role="tab" id="tab-kuis" data-view="kuis" data-t="tabQuiz"></button>
+    <button type="button" class="tab tim" role="tab" id="tab-panel-tim" data-view="panel-tim" data-t="tabTeam"></button>
+  </nav>
+
+  <section class="view" id="v-tanya">
+    <div class="rolebar" id="rolebar"></div>
+    <div class="chat" id="chat" aria-live="polite"></div>
+    <div class="dock">
+      <div class="chips" id="chips"></div>
+      <form class="ask" id="form" autocomplete="off">
+        <input id="q" type="text" maxlength="300" data-tp="placeholder" aria-label="Pertanyaan">
+        <button type="button" class="mic" id="mic" aria-pressed="false" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></button>
+        <button type="submit" data-t="send"></button>
+      </form>
+      <p class="disc" data-t="disc"></p>
+    </div>
+  </section>
+
+  <section class="view" id="v-kenali" hidden><div class="scroll" id="kenali"></div></section>
+  <section class="view" id="v-kuis" hidden><div class="scroll" id="kuis"></div></section>
+  <section class="view" id="v-panel-tim" hidden><div class="scroll" id="tim"></div></section>
+</div>
+
+<div class="scrim" id="scrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <h3 id="sheet-title"></h3>
+    <p id="sheet-body"></p>
+    <div class="actions" style="margin-top:0">
+      <button type="button" class="btn-fill" id="sheet-ok"></button>
+      <button type="button" class="btn-line" id="sheet-close"></button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<div class="vo" id="vo" hidden role="dialog" aria-modal="true" aria-label="Mode suara">
+  <button type="button" class="vo-exit" id="vo-exit"></button>
+  <div class="vo-body">
+    <svg id="vo-patch" class="vo-patch st-ready" viewBox="0 0 120 300" aria-hidden="true"></svg>
+    <p class="vo-status" id="vo-status" aria-live="polite"></p>
+    <p class="vo-you" id="vo-you"></p>
+    <div class="vo-bot" id="vo-bot" hidden></div>
+    <p class="vo-hint" id="vo-hint" hidden></p>
+    <div class="vo-start" id="vo-start">
+      <button type="button" class="btn-fill" id="vo-go-id">Mulai, bahasa Indonesia</button>
+      <button type="button" class="btn-fill" id="vo-go-en">Start in English</button>
+    </div>
+    <p class="vo-hint" id="vo-tap"></p>
+    <div class="vo-demo" id="vo-demo" hidden><span class="lbl" id="vo-demo-lbl"></span><div class="row" id="vo-demo-row"></div></div>
+  </div>
+</div>
+<script>
+/* Basis pengetahuan prototipe. Status: fact = dari tim, draft = edukasi umum belum diverifikasi klinis, todo = menunggu isi tim. */
+const KB = [
+  {
+    id: 'KB-01', status: 'draft',
+    title: { id: 'Apa itu alergi', en: 'What an allergy is' },
+    q: { id: 'Apa itu alergi?', en: 'What is an allergy?' },
+    text: {
+      id: 'Alergi adalah reaksi berlebihan sistem imun terhadap zat yang pada kebanyakan orang tidak berbahaya, seperti debu, serbuk sari, atau makanan tertentu. Gejalanya bisa berupa bersin, hidung tersumbat, mata berair, gatal, ruam kulit, dan pada sebagian orang gangguan napas atau pencernaan.',
+      en: 'An allergy is an overreaction of the immune system to something that is harmless for most people, such as dust, pollen or certain foods. Symptoms can include sneezing, a blocked nose, watery eyes, itching, skin rash and, in some people, breathing or digestive problems.'
+    },
+    kw: 'alergi allergy allergic apa itu what gejala symptoms sistem imun immune reaksi reaction bersin sneezing ruam rash gatal itch debu dust serbuk sari pollen',
+    related: ['KB-02', 'KB-03']
+  },
+  {
+    id: 'KB-02', status: 'draft',
+    title: { id: 'Alergi dan intoleransi', en: 'Allergy versus intolerance' },
+    q: { id: 'Apa bedanya alergi dan intoleransi?', en: 'What is the difference between allergy and intolerance?' },
+    text: {
+      id: 'Alergi melibatkan sistem imun dan bisa menimbulkan reaksi yang cepat. Intoleransi, misalnya terhadap laktosa, tidak melibatkan sistem imun dan umumnya menimbulkan keluhan pencernaan seperti kembung atau diare.',
+      en: 'An allergy involves the immune system and can cause a fast reaction. An intolerance, for example to lactose, does not involve the immune system and usually causes digestive complaints such as bloating or diarrhoea.'
+    },
+    kw: 'beda bedanya perbedaan intoleransi laktosa intolerance difference lactose makanan food kembung bloating diare',
+    related: ['KB-01', 'KB-03']
+  },
+  {
+    id: 'KB-03', status: 'draft',
+    title: { id: 'Patch dan tes tusuk kulit', en: 'Patch test and skin prick test' },
+    q: { id: 'Apa bedanya patch dengan tes tusuk kulit?', en: 'How is a patch different from a skin prick test?' },
+    text: {
+      id: 'Tes tusuk kulit (skin prick test) umumnya dipakai untuk melihat reaksi alergi yang cepat dan dibaca dalam hitungan menit. Uji tempel (patch test) menempelkan alergen pada kulit dan dibaca setelah beberapa hari untuk melihat reaksi yang muncul lambat. Dokter yang menentukan tes mana yang sesuai.',
+      en: 'A skin prick test is generally used to look for fast allergic reactions and is read within minutes. A patch test places the allergen on the skin and is read after a few days to look for slower reactions. A doctor decides which test is suitable.'
+    },
+    tech: {
+      id: 'Uji tempel menilai reaksi hipersensitivitas tipe lambat, sedangkan tes tusuk kulit menilai reaksi yang diperantarai IgE. Pemilihan tes mengikuti indikasi klinis.',
+      en: 'Patch testing assesses delayed-type hypersensitivity, while skin prick testing assesses IgE-mediated reactions. Test selection follows the clinical indication.'
+    },
+    kw: 'tusuk prick test tes beda bedanya perbedaan patch tempel skin kulit uji difference versus banding compare',
+    related: ['KB-04', 'KB-05']
+  },
+  {
+    id: 'KB-04', status: 'fact',
+    title: { id: 'Patch diagnostik Alergen', en: 'The Alergen diagnostic patch' },
+    q: { id: 'Apa itu patch Alergen?', en: 'What is the Alergen patch?' },
+    text: {
+      id: 'Alergen adalah patch diagnostik berisi 10 alergen. Ukuran patch 2 cm x 5 cm dengan sumur berdiameter 7 mm. Patch ditempel pada kulit, lalu reaksi kulit dibaca oleh tenaga kesehatan.',
+      en: 'Alergen is a diagnostic patch with 10 allergens. The patch measures 2 cm x 5 cm with wells 7 mm in diameter. It is placed on the skin and a healthcare professional then reads the skin reaction.'
+    },
+    tech: {
+      id: 'Spesifikasi: 2 cm x 5 cm, 10 sumur, diameter sumur 7 mm. Skala pembacaan reaksi gaya ICDRG (menunggu konfirmasi tim klinis).',
+      en: 'Specification: 2 cm x 5 cm, 10 wells, well diameter 7 mm. ICDRG-style reaction scoring (pending confirmation by the clinical team).'
+    },
+    kw: 'patch alergen apa itu what product produk diagnostik diagnostic ukuran size sumur wells well sepuluh ten kit',
+    related: ['KB-05', 'KB-18']
+  },
+  {
+    id: 'KB-05', status: 'draft',
+    title: { id: 'Cara kerja dan pemakaian patch', en: 'How the patch is used' },
+    q: { id: 'Bagaimana cara kerja patch dan kapan hasil dibaca?', en: 'How does the patch work and when is the result read?' },
+    text: {
+      id: 'Secara umum pada uji tempel, dokter menilai apakah Anda perlu diuji, patch ditempelkan pada kulit, dibiarkan sesuai petunjuk, lalu tenaga kesehatan membaca reaksi kulitnya. Pada uji tempel konvensional pembacaan umumnya sekitar 2 sampai 3 hari kemudian. Lama pemasangan patch Alergen mengikuti protokol tim klinis. Jangan memasang atau menafsirkan sendiri tanpa arahan dokter.',
+      en: 'In general, for a patch test the doctor first decides whether you need testing, the patch is placed on the skin and left as instructed, and a healthcare professional then reads the skin reaction. For conventional patch tests the reading is usually about 2 to 3 days later. How long the Alergen patch stays on follows the clinical team protocol. Do not apply or interpret it yourself without a doctor.'
+    },
+    kw: 'cara kerja bagaimana how works work pakai pemakaian pasang tempel use apply lama duration hasil dibaca result read reading kapan when protokol protocol berapa lama hari days sakit',
+    related: ['KB-03', 'KB-08']
+  },
+  {
+    id: 'KB-07', status: 'draft',
+    title: { id: 'Tablet sublingual desensitisasi', en: 'The sublingual desensitisation tablet' },
+    q: { id: 'Apa itu tablet sublingual desensitisasi?', en: 'What is the sublingual desensitisation tablet?' },
+    text: {
+      id: 'Tablet sublingual diletakkan di bawah lidah dan larut di sana. Konsep desensitisasi, atau imunoterapi alergen, adalah memaparkan tubuh pada alergen secara terkontrol agar sistem imun lebih toleran dari waktu ke waktu. Prosesnya diawasi dokter dan pada imunoterapi alergen secara umum berlangsung berbulan-bulan sampai beberapa tahun.',
+      en: 'A sublingual tablet is placed under the tongue and dissolves there. The idea of desensitisation, or allergen immunotherapy, is to expose the body to the allergen in a controlled way so the immune system becomes more tolerant over time. A doctor supervises the process, and allergen immunotherapy in general runs from several months to a few years.'
+    },
+    kw: 'tablet sublingual desensitisasi desensitization desensitisation imunoterapi immunotherapy bawah lidah under tongue lama proses duration terapi therapy obat pil',
+    related: ['KB-08', 'KB-09']
+  },
+  {
+    id: 'KB-08', status: 'draft',
+    title: { id: 'Siapa kandidatnya', en: 'Who may be a candidate' },
+    q: { id: 'Siapa yang cocok memakai tablet ini?', en: 'Who is suitable for this tablet?' },
+    text: {
+      id: 'Tidak semua orang dengan alergi cocok menjalani desensitisasi. Dokter yang menentukan apakah Anda kandidat, alergen yang relevan, dan jadwal kontrolnya. Tanpa pemeriksaan dokter, aplikasi ini tidak dapat menyatakan seseorang cocok atau tidak.',
+      en: 'Not everyone with an allergy is suited to desensitisation. A doctor decides whether you are a candidate, which allergens are relevant and the follow-up schedule. Without a doctor\'s assessment, this app cannot say whether someone is suitable.'
+    },
+    kw: 'cocok suitable kandidat candidate boleh pakai use user pengguna bisa eligible dokter doctor syarat requirement',
+    related: ['KB-07', 'KB-10']
+  },
+  {
+    id: 'KB-09', status: 'draft',
+    title: { id: 'Klaim tablet', en: 'What is claimed for the tablet' },
+    q: { id: 'Apakah tablet ini menyembuhkan alergi?', en: 'Does this tablet cure allergy?' },
+    text: {
+      id: 'Tim tidak mengklaim bahwa tablet ini menyembuhkan alergi. Desensitisasi bertujuan melatih sistem imun, hasilnya berbeda pada tiap orang, dan perkembangannya ditinjau dokter. Penjelasan tentang bukti dan status pengujian produk disampaikan oleh staf booth.',
+      en: 'The team does not claim that this tablet cures allergy. Desensitisation aims to train the immune system, results differ from person to person and a doctor reviews progress. The booth staff can explain the evidence and testing status of the product.'
+    },
+    kw: 'sembuh menyembuhkan cure heal efektif effective terbukti proven berhasil work manjur klaim claim',
+    related: ['KB-13', 'KB-08']
+  },
+  {
+    id: 'KB-10', status: 'todo',
+    title: { id: 'Anak dan kelompok khusus', en: 'Children and special groups' },
+    q: { id: 'Apakah aman untuk anak?', en: 'Is it safe for children?' },
+    text: {
+      id: 'Informasi penggunaan pada anak, ibu hamil atau menyusui, dan orang dengan penyakit kulit aktif atau kondisi lain belum tersedia di aplikasi ini. Keputusan penggunaan ada pada dokter. Silakan tanya staf booth untuk informasi dari tim.',
+      en: 'Information on use in children, pregnant or breastfeeding women and people with active skin disease or other conditions is not yet available in this app. The decision rests with a doctor. Please ask the booth staff for the team\'s information.'
+    },
+    kw: 'anak child children kids bayi baby balita hamil pregnant menyusui breastfeeding aman safe keamanan safety lansia elderly usia age',
+    related: ['KB-08', 'KB-11']
+  },
+  {
+    id: 'KB-11', status: 'draft',
+    title: { id: 'Kapan harus ke dokter atau IGD', en: 'When to see a doctor or the ER' },
+    q: { id: 'Kapan reaksi alergi harus ke dokter atau IGD?', en: 'When should an allergic reaction go to a doctor or the ER?' },
+    text: {
+      id: 'Segera cari pertolongan medis atau hubungi 119 bila muncul sesak napas, bengkak pada bibir, wajah, atau lidah, suara serak mendadak, pusing berat, atau pingsan setelah terpapar sesuatu yang dicurigai. Jangan menunggu jawaban dari aplikasi ini. Untuk keluhan ringan yang berulang, buat janji dengan dokter.',
+      en: 'Seek medical help or call 119 straight away if you get difficulty breathing, swelling of the lips, face or tongue, a sudden hoarse voice, severe dizziness or fainting after exposure to something suspected. Do not wait for this app. For mild complaints that keep coming back, book a doctor\'s appointment.'
+    },
+    kw: 'darurat emergency igd er dokter doctor kapan when ke sesak napas bengkak swelling pingsan faint anafilaksis anaphylaxis berat severe bahaya danger',
+    related: ['KB-01', 'KB-08']
+  },
+  {
+    id: 'KB-12', status: 'fact',
+    title: { id: 'Paten dan penghargaan', en: 'Patent and award' },
+    q: { id: 'Apakah sudah dipatenkan?', en: 'Is it patented?' },
+    text: {
+      id: 'Patch Alergen dilindungi Paten Sederhana nomor IDS000011522 yang diberikan pada 14 Oktober 2025. Tim adalah finalis Indonesia Patent Award.',
+      en: 'The Alergen patch is protected by Simple Patent number IDS000011522, granted on 14 October 2025. The team is a finalist in the Indonesia Patent Award.'
+    },
+    kw: 'paten patent hki kekayaan intelektual intellectual property award penghargaan finalis finalist dipatenkan patented',
+    related: ['KB-13', 'KB-15']
+  },
+  {
+    id: 'KB-13', status: 'todo',
+    title: { id: 'Izin edar dan uji klinis', en: 'Registration and clinical trials' },
+    q: { id: 'Apakah sudah ada izin edar dan uji klinis?', en: 'Is there regulatory approval and a clinical trial?' },
+    text: {
+      id: 'Informasi izin edar dan tahap pengujian klinis produk belum dimuat di aplikasi ini dan akan dijelaskan oleh staf booth atau tim peneliti. Aplikasi ini tidak memberi klaim di luar informasi yang sudah dikonfirmasi tim.',
+      en: 'Information on product registration and the stage of clinical testing is not yet included in this app and will be explained by the booth staff or the research team. This app makes no claims beyond what the team has confirmed.'
+    },
+    kw: 'izin edar bpom regulasi regulatory registration approval uji klinis clinical trial lolos status penelitian research data bukti evidence',
+    related: ['KB-12', 'KB-15']
+  },
+  {
+    id: 'KB-14', status: 'todo',
+    title: { id: 'Harga dan ketersediaan', en: 'Price and availability' },
+    q: { id: 'Kapan dijual dan berapa harganya?', en: 'When is it on sale and what does it cost?' },
+    text: {
+      id: 'Informasi harga, ketersediaan, dan cara mendapatkan produk belum tersedia di aplikasi ini. Silakan tanya staf booth atau kirim email ke info@alergen.unair.ac.id.',
+      en: 'Information on price, availability and how to obtain the product is not yet available in this app. Please ask the booth staff or email info@alergen.unair.ac.id.'
+    },
+    kw: 'harga price beli buy jual dijual sale sell tersedia available ketersediaan dapatkan get cost biaya mahal murah online',
+    related: ['KB-15', 'KB-13']
+  },
+  {
+    id: 'KB-15', status: 'fact',
+    title: { id: 'Tim dan kerja sama', en: 'Team and collaboration' },
+    q: { id: 'Siapa pengembangnya dan bagaimana bekerja sama?', en: 'Who developed it and how can we collaborate?' },
+    text: {
+      id: 'Alergen dikembangkan di Universitas Airlangga, Surabaya. Dokter, peneliti, dan calon mitra industri yang ingin berdiskusi dapat menghubungi info@alergen.unair.ac.id atau meminta bantuan staf booth.',
+      en: 'Alergen is developed at Universitas Airlangga, Surabaya. Doctors, researchers and prospective industry partners who want to talk can contact info@alergen.unair.ac.id or ask the booth staff.'
+    },
+    kw: 'pengembang tim developer developed team unair universitas airlangga surabaya kerja sama kolaborasi mitra investor partner cooperation collaboration kontak contact email hubungi',
+    related: ['KB-12', 'KB-14']
+  },
+  {
+    id: 'KB-16', status: 'todo',
+    title: { id: 'Booth dan demo', en: 'Booth and demo' },
+    q: { id: 'Di mana booth dan jam demonya?', en: 'Where is the booth and when is the demo?' },
+    text: {
+      id: 'Staf booth siap menjawab pertanyaan dan menunjukkan contoh patch. Nomor booth dan jam demo akan diisi tim sebelum expo dimulai.',
+      en: 'Booth staff can answer questions and show a sample patch. The booth number and demo hours will be filled in by the team before the expo starts.'
+    },
+    kw: 'booth lokasi location demo jam hours expo staf staff mana where pameran stand jadwal schedule',
+    related: ['KB-15', 'KB-04']
+  },
+  {
+    id: 'KB-18', status: 'todo',
+    title: { id: 'Daftar 10 alergen', en: 'List of the 10 allergens' },
+    q: { id: 'Apa saja 10 alergen yang diuji?', en: 'Which 10 allergens are tested?' },
+    text: {
+      id: 'Daftar 10 alergen pada patch akan ditampilkan setelah dikonfirmasi tim. Posisi 10 sumur pada patch bisa dilihat di tab Kenali.',
+      en: 'The list of the 10 allergens on the patch will be shown once confirmed by the team. You can see the positions of the 10 wells on the patch in the Explore tab.'
+    },
+    kw: 'apa saja daftar list yang diuji tested jenis types which allergens alergen sepuluh ten isi content',
+    related: ['KB-04', 'KB-05']
+  }
+];
+
+/* Mesin tanya jawab prototipe: guardrail + retrieval berbasis kata kunci (TF-IDF ringan).
+   Di produksi, bagian retrieval diganti embedding + pgvector dan jawaban disusun LLM dari potongan yang sama. */
+const STOP = new Set((
+  'yang dan di ke dari untuk dengan atau apa apakah saya anda itu ini ada adalah bisa dapat akan pada dalam ya tidak bukan sudah belum juga lebih ' +
+  'siapa kapan berapa bagaimana mengapa kenapa dimana mana saja kah dong deh nih sih lah ' +
+  'the a an of to is are and or in on for with do does can i you it this that be what how when who where why which my me your am was were at by'
+).split(' '));
+
+function norm(s) {
+  return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+}
+function stem(w) {
+  if (w.length > 5 && w.endsWith('nya')) w = w.slice(0, -3);
+  if (w.length > 4 && w.endsWith('s') && !w.endsWith('ss')) w = w.slice(0, -1);
+  return w;
+}
+function toks(s) {
+  return norm(s).split(' ').filter(w => w.length > 1 && !STOP.has(w)).map(stem);
+}
+
+const INDEX = (function () {
+  const docs = KB.map(c => ({
+    c,
+    kw: new Set(toks(c.kw)),
+    ti: new Set(toks(c.title.id + ' ' + c.title.en + ' ' + c.q.id + ' ' + c.q.en)),
+    tx: new Set(toks(c.text.id + ' ' + c.text.en)),
+    qn: [norm(c.q.id), norm(c.q.en)]
+  }));
+  const df = new Map();
+  docs.forEach(d => {
+    new Set([...d.kw, ...d.ti, ...d.tx]).forEach(t => df.set(t, (df.get(t) || 0) + 1));
+  });
+  return { docs, df, N: docs.length };
+})();
+
+function idf(t) {
+  const d = INDEX.df.get(t);
+  return Math.log(1 + INDEX.N / (d || 0.5));
+}
+
+function retrieve(query) {
+  const qt = [...new Set(toks(query))];
+  const qn = norm(query);
+  const den = qt.reduce((s, t) => s + idf(t) * 3, 0) || 1;
+  const ranked = INDEX.docs.map(d => {
+    let score = 0;
+    qt.forEach(t => {
+      let w = 0;
+      if (d.kw.has(t)) w = 3;
+      else if (d.ti.has(t)) w = 2;
+      else if (d.tx.has(t)) w = 1;
+      if (w && INDEX.df.has(t)) score += idf(t) * w;
+    });
+    if (d.qn.includes(qn)) score += 1000;
+    return { c: d.c, score, cov: score / den };
+  }).sort((a, b) => b.score - a.score);
+  return ranked;
+}
+
+const MIN_SCORE = 2.2;
+const MIN_COV = 0.3;
+
+const RX = {
+  inject: /(abaikan|lupakan|abaikanlah).*(instruksi|perintah|aturan|petunjuk)|ignore (all |your |the |previous )*(instructions|rules)|system prompt|jailbreak|pretend (you|to)/,
+  emergency: /\b(sesak|susah napas|sulit napas|tidak bisa napas|anafilaksis|anaphylaxis|pingsan|kejang|bibir bengkak|wajah bengkak|lidah bengkak|tenggorokan bengkak|shortness of breath|cant breathe|can t breathe|trouble breathing|difficulty breathing|fainted|passed out|seizure)\b|bengkak.{0,12}(bibir|wajah|lidah|tenggorokan)|swollen (lip|lips|face|tongue|throat)|(bibir|wajah|lidah|tenggorokan) (saya |anak saya )?(bengkak|membengkak)/,
+  dose: /\b(dosis|takaran|dose|dosage|mg|miligram)\b|berapa (kali|tablet|butir|banyak|mg)|how (many|much) (tablet|tablets|mg|times|pills)|aturan pakai|jadwal minum|jadwal pakai/,
+  thanks: /^(terima kasih|makasih|thanks|thank you|thx)\b/,
+  greet: /^(halo|hai|hi|hello|hey|selamat (pagi|siang|sore|malam)|good (morning|afternoon|evening)|oke|ok|siap)\b/,
+  personalWho: /\b(saya|aku|anak saya|ibu saya|bapak saya|suami saya|istri saya|my (child|son|daughter|mother|father|wife|husband|baby)|i am|i have|i m|i got|am i|can i|should i|do i|is it safe for me)\b/,
+  personalWhat: /(alergi|alergen|ruam|gatal|bentol|gejala|boleh|aman|cocok|pakai|minum|diagnos|sembuh|allerg|rash|itch|symptom|safe|suitable|diagnos|cure|use|take)/
+};
+
+function respond(text, role) {
+  const n = norm(text);
+  const out = { kind: 'answer', chunks: [], score: 0, query: text };
+
+  if (RX.inject.test(n)) { out.kind = 'inject'; return out; }
+  if (RX.emergency.test(n)) { out.kind = 'emergency'; out.chunks = [KB.find(c => c.id === 'KB-11')]; return out; }
+  if (RX.dose.test(n)) { out.kind = 'dose'; out.chunks = [KB.find(c => c.id === 'KB-08')]; return out; }
+  if (n.split(' ').length <= 4) {
+    if (RX.thanks.test(n)) { out.kind = 'thanks'; return out; }
+    if (RX.greet.test(n)) { out.kind = 'greet'; return out; }
+  }
+
+  const ranked = retrieve(text);
+  const top = ranked[0];
+  const hit = top.score >= MIN_SCORE && top.cov >= MIN_COV;
+  out.score = top.score;
+
+  const personal = RX.personalWho.test(n) && RX.personalWhat.test(n);
+  if (personal) {
+    out.kind = 'personal';
+    const picks = [];
+    if (hit) picks.push(top.c);
+    const fallback = KB.find(c => c.id === 'KB-08');
+    if (!picks.includes(fallback)) picks.push(fallback);
+    out.chunks = picks.slice(0, 2);
+    return out;
+  }
+
+  if (!hit) { out.kind = 'none'; return out; }
+
+  out.chunks = [top.c];
+  const second = ranked[1];
+  if (second && second.score >= top.score * 0.6 && second.score >= MIN_SCORE && second.cov >= MIN_COV && top.score < 1000) {
+    out.chunks.push(second.c);
+  }
+  return out;
+}
+
+(function () {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const LS = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* abaikan */ } }
+  };
+
+  const T = {
+    id: {
+      proto: 'Prototipe', sub: 'Asisten pengunjung expo', staff: 'Panggil staf',
+      tabAsk: 'Tanya', tabExplore: 'Kenali', tabQuiz: 'Kuis', tabTeam: 'Panel tim',
+      send: 'Kirim', placeholder: 'Tulis pertanyaan Anda',
+      disc: 'Informasi edukasi, bukan nasihat medis. Jawaban diambil dari materi yang disiapkan tim dan bisa belum lengkap.',
+      welcome: 'Halo, saya asisten Alergen. Saya bisa menjelaskan alergi, patch diagnostik 10 alergen, dan tablet sublingual desensitisasi. Anda sebagai siapa? Dengan begitu jawaban saya lebih pas.',
+      roleSet: 'Baik. Ketuk salah satu pertanyaan di bawah atau tulis pertanyaan Anda sendiri.',
+      role: 'Peran', change: 'Ganti', noRole: 'Belum dipilih', pick: 'Pilih peran',
+      sources: 'Sumber', techLabel: 'Detail teknis', related: 'Lanjut bertanya',
+      tagFact: 'Fakta tim', tagDraft: 'Edukasi umum, belum diverifikasi klinis', tagTodo: 'Menunggu isi dari tim',
+      emergency: 'Ini bisa jadi keadaan darurat. Segera cari pertolongan medis atau hubungi 119 sekarang. Jangan menunggu jawaban dari aplikasi ini.',
+      dose: 'Saya tidak bisa menyebut dosis atau jadwal pemakaian. Dosis ditentukan dokter sesuai kondisi Anda. Staf booth bisa menjelaskan konsep umumnya.',
+      personal: 'Saya tidak bisa menilai gejala Anda atau memastikan produk ini cocok dan aman untuk Anda. Itu perlu pemeriksaan dokter. Berikut informasi umum yang mungkin membantu:',
+      none: 'Belum ada informasinya di materi yang saya miliki. Pertanyaan ini dicatat untuk tim. Staf booth bisa membantu langsung.',
+      inject: 'Saya hanya menjawab pertanyaan seputar alergi dan produk Alergen dari materi yang disiapkan tim.',
+      greet: 'Halo! Ketuk salah satu pertanyaan di bawah atau tulis pertanyaan Anda.',
+      thanks: 'Sama-sama. Ada pertanyaan lain tentang alergi, patch, atau tablet sublingual?',
+      staffTitle: 'Panggil staf booth',
+      staffBody: 'Di versi produksi, tombol ini mengirim pesan ke grup staf. Di prototipe, panggilan hanya dicatat di panel tim dan belum sampai ke siapa pun. Untuk bantuan langsung, datangi meja booth.',
+      staffOk: 'Catat panggilan', close: 'Tutup', staffToast: 'Panggilan dicatat di panel tim (prototipe, belum terkirim ke staf)',
+      kTitle: 'Kenali patch dan tablet', kLead: 'Ketuk salah satu sumur untuk melihat isinya. Gambar ini memakai ukuran asli patch.',
+      well: 'Sumur', of: 'dari 10', wellName: 'Nama alergen', wellPending: 'Menunggu daftar final dari tim.',
+      wellHint: 'Ketuk salah satu dari 10 sumur pada gambar.',
+      patchFlow: 'Gambaran umum uji tempel', tabletFlow: 'Gambaran umum desensitisasi sublingual',
+      pSteps: ['Dokter menilai apakah Anda perlu diuji.', 'Patch ditempel pada kulit dan dibiarkan sesuai petunjuk dokter.', 'Tenaga kesehatan membaca reaksi kulit.', 'Dokter menjelaskan hasil dan langkah berikutnya.'],
+      tSteps: ['Dokter menilai apakah Anda kandidat.', 'Tablet diletakkan di bawah lidah sesuai jadwal dari dokter.', 'Kontrol berkala untuk memantau respons dan keluhan.', 'Dokter menentukan untuk lanjut, mengubah, atau menghentikan.'],
+      flowNote: 'Urutan sebenarnya mengikuti petunjuk dokter dan protokol tim klinis.',
+      dimW: '2 cm', dimH: '5 cm', dimD: 'Ø 7 mm',
+      qTitle: 'Kuis singkat', qOf: 'Pertanyaan', next: 'Lanjut', finish: 'Lihat hasil', again: 'Ulangi kuis', toAsk: 'Tanya lebih lanjut',
+      right: 'Tepat.', wrong: 'Belum tepat.', result: 'Skor Anda',
+      resultMsg: ['Mulai dari sini. Tab Tanya bisa membantu menjelaskan dasarnya.', 'Cukup baik. Beberapa hal masih bisa diperdalam.', 'Bagus. Anda sudah paham dasar alergi.'],
+      tTitle: 'Panel tim', tLead: 'Tampilan untuk tim booth. Angka sesi ini berasal dari perangkat ini saja.',
+      sSession: 'Sesi ini', sQ: 'Pertanyaan', sNone: 'Tak terjawab', sStaff: 'Panggilan staf', sGuard: 'Guardrail aktif',
+      topQ: 'Topik paling sering ditanya', unans: 'Pertanyaan belum terjawab', empty: 'Belum ada data dari sesi ini.',
+      example: 'Contoh', exampleNote: 'Data contoh untuk menggambarkan tampilan, bukan data pengunjung.',
+      kiosk: 'Mode kiosk: kembali ke awal setelah 90 detik tanpa aktivitas', clear: 'Hapus data sesi ini',
+      kioskReset: 'Kembali ke layar awal',
+      listen: 'Dengar', stop: 'Berhenti', voiceMode: 'Suara otomatis', micLabel: 'Bicara', listening: 'Mendengarkan...',
+      micDenied: 'Mikrofon tidak bisa diakses di tampilan ini. Pakai ikon mikrofon di keyboard HP, atau ketik pertanyaan Anda.',
+      micNoSpeech: 'Tidak ada suara terdengar. Coba lagi.', ttsNone: 'Perangkat ini tidak bisa membacakan jawaban.',
+      voiceBtn: 'Mode suara', vExit: 'Keluar',
+      v_ready: 'Siap mendengarkan', v_listening: 'Mendengarkan', v_thinking: 'Memproses', v_speaking: 'Berbicara', v_blocked: 'Suara belum bisa dipakai',
+      vTap: 'Setelah mulai, cukup bicara. Tidak perlu menyentuh layar.',
+      vHint: 'Coba katakan: "Apa itu patch Alergen?", "Apakah aman untuk anak?", atau "Panggil staf". Katakan "selesai" bila sudah cukup.',
+      vYou: 'Anda',
+      vGreet: 'Halo, saya asisten Alergen. Anda bisa bertanya tentang alergi, patch diagnostik, atau tablet sublingual. Silakan bicara. Katakan selesai bila sudah cukup.',
+      vGreetShort: 'Halo! Silakan sampaikan pertanyaan Anda.', vThanksShort: 'Sama-sama. Ada pertanyaan lain?',
+      vStill: 'Apakah Anda masih di sana? Silakan ucapkan pertanyaan Anda, atau katakan selesai.',
+      vBye: 'Terima kasih. Sampai jumpa di booth kami.', vTimeout: 'Saya istirahat dulu. Sentuh layar bila ingin bertanya lagi.',
+      vRole: 'Baik, saya sesuaikan jawaban untuk %s.', vLangSet: 'Baik, kita lanjut dalam bahasa Indonesia.',
+      vStaff: 'Permintaan Anda dicatat. Di prototipe ini staf belum diberi tahu otomatis, jadi silakan hubungi staf di meja booth.',
+      vFollow: 'Ada pertanyaan lain?', vNoRepeat: 'Belum ada jawaban untuk diulang.',
+      vMicBlocked: 'Mikrofon tidak bisa dipakai di tampilan ini. Buka halaman ini langsung di Chrome lewat alamat HTTPS atau localhost, lalu izinkan mikrofon.',
+      vNet: 'Pengenalan suara butuh koneksi internet. Periksa koneksi, lalu coba lagi.',
+      vNoSR: 'Browser ini tidak mendukung pengenalan suara. Gunakan Chrome atau Edge.',
+      vDemo: 'Uji tanpa mikrofon (hanya untuk pratinjau)',
+      vSamples: ['Apa itu patch Alergen?', 'Apakah aman untuk anak?', 'Berapa dosis tabletnya?', 'Panggil staf']
+    },
+    en: {
+      proto: 'Prototype', sub: 'Expo visitor assistant', staff: 'Call staff',
+      tabAsk: 'Ask', tabExplore: 'Explore', tabQuiz: 'Quiz', tabTeam: 'Team panel',
+      send: 'Send', placeholder: 'Type your question',
+      disc: 'Educational information, not medical advice. Answers come from material prepared by the team and may be incomplete.',
+      welcome: 'Hello, I am the Alergen assistant. I can explain allergy, the 10-allergen diagnostic patch and the sublingual desensitisation tablet. Who are you? That helps me tune my answers.',
+      roleSet: 'Great. Tap one of the questions below or type your own.',
+      role: 'Role', change: 'Change', noRole: 'Not chosen', pick: 'Choose a role',
+      sources: 'Sources', techLabel: 'Technical detail', related: 'Keep asking',
+      tagFact: 'Team fact', tagDraft: 'General education, not clinically verified', tagTodo: 'Waiting for team input',
+      emergency: 'This could be an emergency. Seek medical help or call 119 right now. Do not wait for an answer from this app.',
+      dose: 'I cannot state doses or how to take it. A doctor sets the dose for your situation. The booth staff can explain the general concept.',
+      personal: 'I cannot assess your symptoms or confirm this product is suitable and safe for you. That needs a doctor\'s examination. Here is general information that may help:',
+      none: 'I do not have that in my material. This question has been logged for the team. The booth staff can help you directly.',
+      inject: 'I only answer questions about allergy and the Alergen products from material prepared by the team.',
+      greet: 'Hello! Tap one of the questions below or type your own.',
+      thanks: 'You are welcome. Any other question about allergy, the patch or the sublingual tablet?',
+      staffTitle: 'Call booth staff',
+      staffBody: 'In the production version this button sends a message to the staff group. In the prototype the call is only logged in the team panel and does not reach anyone. For help right now, come to the booth desk.',
+      staffOk: 'Log the call', close: 'Close', staffToast: 'Call logged in the team panel (prototype, not sent to staff)',
+      kTitle: 'Explore the patch and tablet', kLead: 'Tap a well to see what it holds. The drawing uses the real patch dimensions.',
+      well: 'Well', of: 'of 10', wellName: 'Allergen name', wellPending: 'Waiting for the final list from the team.',
+      wellHint: 'Tap one of the 10 wells in the drawing.',
+      patchFlow: 'General outline of a patch test', tabletFlow: 'General outline of sublingual desensitisation',
+      pSteps: ['A doctor decides whether you need testing.', 'The patch is placed on the skin and left as the doctor instructs.', 'A healthcare professional reads the skin reaction.', 'The doctor explains the result and the next step.'],
+      tSteps: ['A doctor decides whether you are a candidate.', 'The tablet is placed under the tongue on the schedule the doctor gives.', 'Regular check-ups monitor response and complaints.', 'The doctor decides to continue, adjust or stop.'],
+      flowNote: 'The actual sequence follows your doctor and the clinical team protocol.',
+      dimW: '2 cm', dimH: '5 cm', dimD: 'Ø 7 mm',
+      qTitle: 'Quick quiz', qOf: 'Question', next: 'Next', finish: 'See result', again: 'Retake quiz', toAsk: 'Ask more',
+      right: 'Correct.', wrong: 'Not quite.', result: 'Your score',
+      resultMsg: ['A starting point. The Ask tab can explain the basics.', 'Good. A few things could go deeper.', 'Great. You know the basics of allergy.'],
+      tTitle: 'Team panel', tLead: 'View for the booth team. Session figures come from this device only.',
+      sSession: 'This session', sQ: 'Questions', sNone: 'Unanswered', sStaff: 'Staff calls', sGuard: 'Guardrails hit',
+      topQ: 'Most asked topics', unans: 'Unanswered questions', empty: 'No data from this session yet.',
+      example: 'Example', exampleNote: 'Example data to show the layout, not visitor data.',
+      kiosk: 'Kiosk mode: return to start after 90 seconds without activity', clear: 'Clear this session data',
+      kioskReset: 'Back to start screen',
+      listen: 'Listen', stop: 'Stop', voiceMode: 'Auto voice', micLabel: 'Speak', listening: 'Listening...',
+      micDenied: 'The microphone cannot be used in this view. Use the microphone key on your phone keyboard, or type your question.',
+      micNoSpeech: 'No speech heard. Please try again.', ttsNone: 'This device cannot read the answer aloud.',
+      voiceBtn: 'Voice mode', vExit: 'Exit',
+      v_ready: 'Ready to listen', v_listening: 'Listening', v_thinking: 'Working on it', v_speaking: 'Speaking', v_blocked: 'Voice is not available yet',
+      vTap: 'Once started, just speak. No need to touch the screen.',
+      vHint: 'Try saying: "What is the Alergen patch?", "Is it safe for children?" or "Call staff". Say "done" when you are finished.',
+      vYou: 'You',
+      vGreet: 'Hello, I am the Alergen assistant. You can ask about allergy, the diagnostic patch or the sublingual tablet. Please go ahead and speak. Say done when you are finished.',
+      vGreetShort: 'Hello! Please go ahead with your question.', vThanksShort: 'You are welcome. Any other question?',
+      vStill: 'Are you still there? Please say your question, or say done.',
+      vBye: 'Thank you. See you at our booth.', vTimeout: 'I will take a break now. Touch the screen if you want to ask again.',
+      vRole: 'Sure, I will tune my answers for %s.', vLangSet: 'Sure, we will continue in English.',
+      vStaff: 'Your request has been logged. In this prototype staff are not notified automatically, so please contact the staff at the booth desk.',
+      vFollow: 'Any other question?', vNoRepeat: 'There is no answer to repeat yet.',
+      vMicBlocked: 'The microphone cannot be used in this view. Open this page directly in Chrome over HTTPS or localhost, then allow the microphone.',
+      vNet: 'Speech recognition needs an internet connection. Check your connection and try again.',
+      vNoSR: 'This browser does not support speech recognition. Please use Chrome or Edge.',
+      vDemo: 'Try without a microphone (preview only)',
+      vSamples: ['What is the Alergen patch?', 'Is it safe for children?', 'What is the dose of the tablet?', 'Call staff']
+    }
+  };
+
+  const ROLES = [
+    { k: 'umum', id: 'Masyarakat umum', en: 'General public' },
+    { k: 'keluarga', id: 'Keluarga pasien', en: 'Patient family' },
+    { k: 'nakes', id: 'Tenaga kesehatan', en: 'Healthcare professional' },
+    { k: 'mitra', id: 'Mitra atau investor', en: 'Partner or investor' }
+  ];
+  const CHIPS = {
+    umum: ['KB-01', 'KB-02', 'KB-04', 'KB-05', 'KB-07', 'KB-09', 'KB-11', 'KB-14'],
+    keluarga: ['KB-10', 'KB-11', 'KB-01', 'KB-04', 'KB-05', 'KB-07', 'KB-08', 'KB-14'],
+    nakes: ['KB-04', 'KB-03', 'KB-05', 'KB-07', 'KB-08', 'KB-13', 'KB-12', 'KB-15'],
+    mitra: ['KB-12', 'KB-13', 'KB-15', 'KB-14', 'KB-04', 'KB-07', 'KB-16', 'KB-09']
+  };
+  const DEFAULT_CHIPS = ['KB-01', 'KB-04', 'KB-07', 'KB-05', 'KB-11', 'KB-14'];
+
+  const QUIZ = [
+    {
+      q: { id: 'Alergi makanan dan intoleransi makanan (misalnya laktosa) adalah hal yang sama.', en: 'Food allergy and food intolerance (for example lactose) are the same thing.' },
+      o: { id: ['Benar', 'Salah'], en: ['True', 'False'] }, a: 1,
+      e: { id: 'Alergi melibatkan sistem imun. Intoleransi tidak melibatkan sistem imun dan umumnya berupa keluhan pencernaan.', en: 'An allergy involves the immune system. An intolerance does not, and is usually a digestive complaint.' }
+    },
+    {
+      q: { id: 'Gejala alergi hanya muncul di kulit.', en: 'Allergy symptoms only show up on the skin.' },
+      o: { id: ['Benar', 'Salah'], en: ['True', 'False'] }, a: 1,
+      e: { id: 'Alergi bisa muncul di hidung, mata, saluran napas, dan pencernaan, selain di kulit.', en: 'Allergy can affect the nose, eyes, airways and digestion as well as the skin.' }
+    },
+    {
+      q: { id: 'Pada uji tempel (patch test) konvensional, reaksi kulit umumnya dibaca setelah...', en: 'In a conventional patch test, the skin reaction is usually read after...' },
+      o: { id: ['Sekitar 15 menit', 'Sekitar 2 sampai 3 hari', 'Sekitar 2 minggu'], en: ['About 15 minutes', 'About 2 to 3 days', 'About 2 weeks'] }, a: 1,
+      e: { id: 'Reaksi yang muncul lambat baru terlihat setelah beberapa hari. Tes tusuk kulit dibaca dalam hitungan menit. Protokol patch Alergen mengikuti arahan tim klinis.', en: 'Slow reactions only show after a few days. A skin prick test is read within minutes. The Alergen patch protocol follows the clinical team.' }
+    },
+    {
+      q: { id: 'Setelah makan sesuatu, bibir bengkak dan napas terasa sesak. Langkah terbaik?', en: 'After eating something, your lips swell and breathing feels tight. Best step?' },
+      o: { id: ['Menunggu sampai besok', 'Segera cari pertolongan medis atau hubungi 119', 'Tidur dulu supaya reda'], en: ['Wait until tomorrow', 'Seek medical help or call 119 straight away', 'Sleep first so it settles'] }, a: 1,
+      e: { id: 'Bengkak di bibir dan sesak napas bisa menandakan reaksi berat. Jangan menunggu.', en: 'Swollen lips and difficulty breathing can signal a severe reaction. Do not wait.' }
+    },
+    {
+      q: { id: 'Hasil uji alergi sebaiknya ditafsirkan oleh...', en: 'Allergy test results should be interpreted by...' },
+      o: { id: ['Diri sendiri dari foto di internet', 'Tenaga kesehatan yang terlatih', 'Teman yang pernah alergi'], en: ['Yourself, from photos online', 'A trained healthcare professional', 'A friend who has had allergies'] }, a: 1,
+      e: { id: 'Menafsirkan reaksi kulit butuh pelatihan dan konteks klinis. Biarkan tenaga kesehatan yang membacanya.', en: 'Reading a skin reaction takes training and clinical context. Leave it to a healthcare professional.' }
+    }
+  ];
+
+  const SEED_TOP = [['Apa itu patch Alergen?', 23], ['Kapan dijual dan berapa harganya?', 17], ['Apakah aman untuk anak?', 14], ['Apakah tablet ini menyembuhkan alergi?', 8]];
+  const SEED_NONE = ['Apakah patch terasa sakit saat dilepas?', 'Bisa dipesan lewat marketplace?'];
+
+  const state = {
+    lang: LS.get('alergen-lang') === 'en' ? 'en' : 'id',
+    role: null, view: 'tanya', msgs: [], well: null,
+    quiz: { i: 0, score: 0, picked: null, done: false },
+    log: [], kiosk: false, voice: false, last: Date.now()
+  };
+  try { state.log = JSON.parse(LS.get('alergen-log') || '[]').slice(-200); } catch (e) { state.log = []; }
+
+  const t = k => T[state.lang][k];
+  function el(tag, cls, txt) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (txt != null) n.textContent = txt;
+    return n;
+  }
+  function btn(label, cls, fn) {
+    const b = el('button', cls, label);
+    b.type = 'button';
+    b.addEventListener('click', fn);
+    return b;
+  }
+  function saveLog() { LS.set('alergen-log', JSON.stringify(state.log.slice(-200))); }
+  function touch() { state.last = Date.now(); }
+  function roleLabel(k) { const r = ROLES.find(x => x.k === k); return r ? r[state.lang] : t('noRole'); }
+  function chunkById(id) { return KB.find(c => c.id === id); }
+
+  let toastTimer = null;
+  function toast(msg) {
+    const n = $('#toast');
+    n.textContent = msg; n.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { n.hidden = true; }, 3600);
+  }
+
+  /* ---------- Chat ---------- */
+  function initChat() {
+    state.msgs = [{ from: 'bot', type: 'welcome' }];
+  }
+
+  function renderRolebar() {
+    const bar = $('#rolebar');
+    bar.textContent = '';
+    bar.appendChild(el('span', null, t('role') + ':'));
+    bar.appendChild(el('b', null, roleLabel(state.role)));
+    bar.appendChild(btn(state.role ? t('change') : t('pick'), 'linkbtn', () => {
+      touch();
+      state.msgs.push({ from: 'bot', type: 'welcome' });
+      renderChat();
+    }));
+    if (synth) {
+      const sw = el('button', 'vswitch');
+      sw.type = 'button';
+      sw.setAttribute('role', 'switch');
+      sw.setAttribute('aria-checked', String(state.voice));
+      sw.appendChild(el('span', null, t('voiceMode')));
+      sw.appendChild(el('span', 'trk'));
+      sw.addEventListener('click', () => { touch(); state.voice = !state.voice; if (!state.voice) stopSpeech(); renderRolebar(); });
+      bar.appendChild(sw);
+    }
+  }
+
+  function renderChips() {
+    const box = $('#chips');
+    box.textContent = '';
+    const ids = state.role ? CHIPS[state.role] : DEFAULT_CHIPS;
+    ids.forEach(id => {
+      const c = chunkById(id);
+      box.appendChild(btn(c.q[state.lang], 'chip', () => ask(c.q[state.lang])));
+    });
+  }
+
+  function sourceRow(c) {
+    const row = el('div', 'src');
+    row.appendChild(el('code', null, c.id));
+    row.appendChild(el('span', null, c.title[state.lang]));
+    const tag = { fact: ['fact', 'tagFact'], draft: ['draft', 'tagDraft'], todo: ['todo', 'tagTodo'] }[c.status];
+    row.appendChild(el('span', 'pill ' + tag[0], t(tag[1])));
+    return row;
+  }
+
+  function renderBot(m) {
+    if (m.type === 'welcome') {
+      const d = el('div', 'msg');
+      d.appendChild(el('p', null, t('welcome')));
+      const g = el('div', 'roles');
+      ROLES.forEach(r => {
+        const b = btn(r[state.lang], null, () => {
+          touch();
+          state.role = r.k;
+          state.msgs.push({ from: 'user', text: r[state.lang] });
+          state.msgs.push({ from: 'bot', type: 'roleSet' });
+          renderChat(); renderChips(); renderRolebar();
+        });
+        b.setAttribute('aria-pressed', String(state.role === r.k));
+        g.appendChild(b);
+      });
+      d.appendChild(g);
+      return d;
+    }
+    if (m.type === 'roleSet') { const d = el('div', 'msg'); d.appendChild(el('p', null, t('roleSet'))); return d; }
+
+    const res = m.res;
+    const d = el('div', 'msg' + (res.kind === 'emergency' ? ' alert' : ''));
+    const leadKey = LEAD[res.kind];
+    if (leadKey) d.appendChild(el('p', res.kind === 'emergency' ? 'lead' : null, t(leadKey)));
+
+    if (res.kind !== 'emergency') {
+      res.chunks.forEach((c, i) => {
+        if (res.kind === 'dose') return;
+        const p = el('p', null, c.text[state.lang]);
+        d.appendChild(p);
+        if (m.role === 'nakes' && c.tech) {
+          const tb = el('div', 'tech');
+          tb.appendChild(el('b', null, t('techLabel')));
+          tb.appendChild(document.createTextNode(c.tech[state.lang]));
+          d.appendChild(tb);
+        }
+      });
+    } else {
+      d.appendChild(el('p', null, res.chunks[0].text[state.lang]));
+    }
+
+    const needStaff = ['emergency', 'dose', 'personal', 'none'].includes(res.kind);
+    const acts = el('div', 'actions');
+    if (synth) {
+      const lb = btn(t('listen'), 'btn-line listen', () => {
+        touch();
+        if (speaking && speaking.btn === lb) stopSpeech(); else speak(botSpeech(m), lb);
+      });
+      lb.setAttribute('aria-pressed', 'false');
+      acts.appendChild(lb);
+    }
+    if (needStaff) acts.appendChild(btn(t('staff'), 'btn-line' + (res.kind === 'emergency' ? ' danger' : ''), openSheet));
+    if (res.kind === 'answer' || res.kind === 'personal') {
+      const first = res.chunks[0];
+      const rel = (first.related || []).map(chunkById).filter(c => c && !res.chunks.includes(c)).slice(0, 2);
+      rel.forEach(c => acts.appendChild(btn(c.q[state.lang], 'btn-line', () => ask(c.q[state.lang]))));
+    }
+    if (acts.childNodes.length) d.appendChild(acts);
+
+    const srcChunks = res.chunks;
+    if (srcChunks.length && ['answer', 'personal', 'emergency'].includes(res.kind)) {
+      const s = el('div', 'sources');
+      s.appendChild(el('span', 'lbl', t('sources')));
+      srcChunks.forEach(c => s.appendChild(sourceRow(c)));
+      d.appendChild(s);
+    }
+    return d;
+  }
+
+  function renderChat() {
+    const chat = $('#chat');
+    chat.textContent = '';
+    state.msgs.slice(-60).forEach(m => {
+      if (m.from === 'user') chat.appendChild(el('div', 'msg user', m.text));
+      else chat.appendChild(renderBot(m));
+    });
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function showTyping() {
+    const d = el('div', 'msg'); d.id = 'typing';
+    const tp = el('span', 'typing');
+    tp.appendChild(el('i')); tp.appendChild(el('i')); tp.appendChild(el('i'));
+    d.appendChild(tp);
+    $('#chat').appendChild(d);
+    $('#chat').scrollTop = $('#chat').scrollHeight;
+  }
+
+  function ask(text) {
+    text = String(text || '').trim().slice(0, 300);
+    if (!text) return;
+    touch();
+    stopSpeech();
+    state.msgs.push({ from: 'user', text });
+    renderChat();
+    showTyping();
+    const res = respond(text, state.role);
+    state.log.push({ t: Date.now(), q: text.replace(/[0-9]{6,}/g, '***'), kind: res.kind, id: res.chunks[0] ? res.chunks[0].id : null });
+    saveLog();
+    setTimeout(() => {
+      state.msgs.push({ from: 'bot', type: 'answer', res, role: state.role });
+      renderChat();
+      if (state.voice && synth) {
+        const bm = state.msgs[state.msgs.length - 1];
+        const lbs = document.querySelectorAll('#chat .listen');
+        speak(botSpeech(bm), lbs[lbs.length - 1] || null);
+      }
+      if (state.view === 'panel-tim') renderTim();
+    }, reduced ? 0 : 450);
+  }
+
+  /* ---------- Sheet staf ---------- */
+  function openSheet() {
+    $('#sheet-title').textContent = t('staffTitle');
+    $('#sheet-body').textContent = t('staffBody');
+    $('#sheet-ok').textContent = t('staffOk');
+    $('#sheet-close').textContent = t('close');
+    $('#scrim').hidden = false;
+    $('#sheet-ok').focus();
+  }
+  function closeSheet() { $('#scrim').hidden = true; }
+
+  /* ---------- Kenali ---------- */
+  const NS = 'http://www.w3.org/2000/svg';
+  function svgEl(tag, attrs, txt) {
+    const n = document.createElementNS(NS, tag);
+    Object.keys(attrs || {}).forEach(k => n.setAttribute(k, attrs[k]));
+    if (txt != null) n.textContent = txt;
+    return n;
+  }
+  function patchSVG() {
+    const svg = svgEl('svg', { viewBox: '0 0 300 420', class: 'patch', role: 'group', 'aria-label': 'Patch 2 cm x 5 cm, 10 sumur' });
+    svg.appendChild(svgEl('rect', { class: 'p-body', x: 80, y: 40, width: 140, height: 350, rx: 14 }));
+    // dimensi lebar
+    svg.appendChild(svgEl('path', { class: 'p-dim', d: 'M80 28H220M80 22V34M220 22V34' }));
+    svg.appendChild(svgEl('text', { class: 'p-txt', x: 150, y: 16, 'text-anchor': 'middle' }, t('dimW')));
+    // dimensi tinggi
+    svg.appendChild(svgEl('path', { class: 'p-dim', d: 'M244 40V390M238 40H250M238 390H250' }));
+    svg.appendChild(svgEl('text', { class: 'p-txt', x: 254, y: 219 }, t('dimH')));
+    // diameter sumur
+    svg.appendChild(svgEl('path', { class: 'p-dim', d: 'M60 75H94' }));
+    svg.appendChild(svgEl('text', { class: 'p-txt', x: 38, y: 79, 'text-anchor': 'middle' }, t('dimD')));
+    const cols = [119.2, 180.8];
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 2; c++) {
+        const n = r * 2 + c + 1;
+        const g = svgEl('g', { class: 'pg' + (state.well === n ? ' on' : ''), tabindex: 0, role: 'button', 'aria-label': t('well') + ' ' + n, 'aria-pressed': String(state.well === n) });
+        g.appendChild(svgEl('circle', { class: 'p-well', cx: cols[c], cy: 75 + r * 70, r: 24.5 }));
+        g.appendChild(svgEl('text', { class: 'p-num', x: cols[c], y: 75 + r * 70 }, String(n)));
+        const pick = () => { touch(); state.well = n; renderKenali(); };
+        g.addEventListener('click', pick);
+        g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+        svg.appendChild(g);
+      }
+    }
+    return svg;
+  }
+  const ALLERGENS = new Array(10).fill(null); // diisi tim setelah daftar final dikonfirmasi
+
+  function stepsCard(title, items) {
+    const c = el('div', 'card');
+    c.appendChild(el('h3', null, title));
+    const ol = el('ol', 'steps');
+    items.forEach(s => ol.appendChild(el('li', null, s)));
+    c.appendChild(ol);
+    return c;
+  }
+  function renderKenali() {
+    const root = $('#kenali');
+    root.textContent = '';
+    root.appendChild(el('h2', null, t('kTitle')));
+    root.appendChild(el('p', 'lead2', t('kLead')));
+    const split = el('div', 'split');
+    split.appendChild(patchSVG());
+    const info = el('div', 'card wellinfo');
+    if (state.well) {
+      info.appendChild(el('div', 'k', t('well') + ' ' + state.well + ' ' + t('of')));
+      info.appendChild(el('h3', null, ALLERGENS[state.well - 1] || t('wellName')));
+      if (!ALLERGENS[state.well - 1]) info.appendChild(el('p', null, t('wellPending')));
+    } else {
+      info.appendChild(el('p', null, t('wellHint')));
+    }
+    split.appendChild(info);
+    root.appendChild(split);
+    const flows = el('div', 'flows');
+    flows.appendChild(stepsCard(t('patchFlow'), t('pSteps')));
+    flows.appendChild(stepsCard(t('tabletFlow'), t('tSteps')));
+    root.appendChild(flows);
+    root.appendChild(el('p', 'note', t('flowNote')));
+  }
+
+  /* ---------- Kuis ---------- */
+  function renderKuis() {
+    const root = $('#kuis');
+    root.textContent = '';
+    const L = state.lang;
+    root.appendChild(el('h2', null, t('qTitle')));
+    const card = el('div', 'card');
+    card.style.marginTop = '14px';
+    const q = state.quiz;
+    if (q.done) {
+      card.appendChild(el('div', 'qcount', t('result')));
+      card.appendChild(el('div', 'score', q.score + ' / ' + QUIZ.length));
+      const band = q.score <= 2 ? 0 : q.score <= 4 ? 1 : 2;
+      card.appendChild(el('p', null, t('resultMsg')[band]));
+      const a = el('div', 'actions');
+      a.appendChild(btn(t('toAsk'), 'btn-fill', () => { location.hash = 'tanya'; }));
+      a.appendChild(btn(t('again'), 'btn-line', () => { state.quiz = { i: 0, score: 0, picked: null, done: false }; renderKuis(); }));
+      card.appendChild(a);
+    } else {
+      const item = QUIZ[q.i];
+      card.appendChild(el('div', 'qcount', t('qOf') + ' ' + (q.i + 1) + ' / ' + QUIZ.length));
+      card.appendChild(el('p', 'qtext', item.q[L]));
+      const opts = el('div', 'opts');
+      item.o[L].forEach((label, idx) => {
+        const b = btn(label, 'opt', () => {
+          if (q.picked !== null) return;
+          touch();
+          q.picked = idx;
+          if (idx === item.a) q.score++;
+          renderKuis();
+        });
+        if (q.picked !== null) {
+          b.disabled = true;
+          if (idx === item.a) b.classList.add('right');
+          else if (idx === q.picked) b.classList.add('wrong');
+        }
+        opts.appendChild(b);
+      });
+      card.appendChild(opts);
+      if (q.picked !== null) {
+        const ex = el('div', 'expl');
+        const strong = el('b', null, (q.picked === item.a ? t('right') : t('wrong')) + ' ');
+        ex.appendChild(strong);
+        ex.appendChild(document.createTextNode(item.e[L]));
+        card.appendChild(ex);
+        const a = el('div', 'actions');
+        const last = q.i === QUIZ.length - 1;
+        a.appendChild(btn(last ? t('finish') : t('next'), 'btn-fill', () => {
+          if (last) q.done = true; else { q.i++; q.picked = null; }
+          renderKuis();
+        }));
+        card.appendChild(a);
+      }
+    }
+    root.appendChild(card);
+  }
+
+  /* ---------- Panel tim ---------- */
+  function renderTim() {
+    const root = $('#tim');
+    root.textContent = '';
+    root.appendChild(el('h2', null, t('tTitle')));
+    root.appendChild(el('p', 'lead2', t('tLead')));
+    const L = state.lang;
+    const qs = state.log.filter(x => x.q);
+    const none = state.log.filter(x => x.kind === 'none');
+    const staff = state.log.filter(x => x.kind === 'staff');
+    const guard = state.log.filter(x => ['emergency', 'dose', 'personal', 'inject'].includes(x.kind));
+
+    const stats = el('div', 'stats');
+    [[t('sQ'), qs.length], [t('sNone'), none.length], [t('sStaff'), staff.length], [t('sGuard'), guard.length]].forEach(([label, v]) => {
+      const s = el('div', 'stat');
+      s.appendChild(el('b', null, String(v)));
+      s.appendChild(el('span', null, label));
+      stats.appendChild(s);
+    });
+    root.appendChild(stats);
+
+    const cols = el('div', 'cols');
+    const top = el('div', 'card');
+    top.appendChild(el('h3', null, t('topQ')));
+    const counts = {};
+    qs.forEach(x => { if (x.id && (x.kind === 'answer' || x.kind === 'personal')) counts[x.id] = (counts[x.id] || 0) + 1; });
+    const live = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 5);
+    const ul = el('ul', 'lst');
+    if (live.length) {
+      live.forEach(id => {
+        const li = el('li'); li.appendChild(el('span', null, chunkById(id).q[L])); li.appendChild(el('span', null, String(counts[id]))); ul.appendChild(li);
+      });
+    } else {
+      ul.appendChild(el('li', null, t('empty')));
+    }
+    top.appendChild(ul);
+    const ex = el('p', 'note');
+    ex.appendChild(el('span', 'tag-ex', t('example')));
+    ex.appendChild(document.createTextNode(' ' + t('exampleNote')));
+    top.appendChild(ex);
+    const ul2 = el('ul', 'lst'); ul2.style.marginTop = '8px'; ul2.style.opacity = '.75';
+    SEED_TOP.forEach(([q, n]) => { const li = el('li'); li.appendChild(el('span', null, q)); li.appendChild(el('span', null, String(n))); ul2.appendChild(li); });
+    top.appendChild(ul2);
+    cols.appendChild(top);
+
+    const un = el('div', 'card');
+    un.appendChild(el('h3', null, t('unans')));
+    const ul3 = el('ul', 'lst');
+    if (none.length) none.slice(-6).reverse().forEach(x => { const li = el('li'); li.appendChild(el('span', null, x.q)); ul3.appendChild(li); });
+    else ul3.appendChild(el('li', null, t('empty')));
+    un.appendChild(ul3);
+    const ex2 = el('p', 'note');
+    ex2.appendChild(el('span', 'tag-ex', t('example')));
+    un.appendChild(ex2);
+    const ul4 = el('ul', 'lst'); ul4.style.opacity = '.75';
+    SEED_NONE.forEach(q => ul4.appendChild(el('li', null, q)));
+    un.appendChild(ul4);
+    cols.appendChild(un);
+    root.appendChild(cols);
+
+    const k = el('label', 'kiosk');
+    const cb = el('input'); cb.type = 'checkbox'; cb.id = 'kiosk'; cb.checked = state.kiosk;
+    cb.addEventListener('change', () => { state.kiosk = cb.checked; touch(); });
+    k.appendChild(cb);
+    k.appendChild(el('span', null, t('kiosk')));
+    root.appendChild(k);
+    const clr = btn(t('clear'), 'btn-line', () => { state.log = []; saveLog(); renderTim(); });
+    clr.style.marginTop = '14px';
+    root.appendChild(clr);
+  }
+
+  /* ---------- Navigasi dan bahasa ---------- */
+  const VIEWS = ['tanya', 'kenali', 'kuis', 'panel-tim'];
+  function route() {
+    let h = location.hash.slice(1);
+    if (h === 'suara') {
+      state.view = 'suara';
+      VIEWS.forEach(v => { $('#v-' + v).hidden = true; $('#tab-' + v).setAttribute('aria-selected', 'false'); });
+      if (!vm.open) openVoice();
+      return;
+    }
+    if (vm.open) closeVoice();
+    if (VIEWS.indexOf(h) < 0) h = 'tanya';
+    state.view = h;
+    if (h !== 'tanya') { stopSpeech(); stopMic(); }
+    VIEWS.forEach(v => {
+      $('#v-' + v).hidden = v !== h;
+      const tb = $('#tab-' + v);
+      tb.setAttribute('aria-selected', String(v === h));
+    });
+    if (h === 'kenali') renderKenali();
+    if (h === 'kuis') renderKuis();
+    if (h === 'panel-tim') renderTim();
+    if (h === 'tanya') { const c = $('#chat'); c.scrollTop = c.scrollHeight; }
+  }
+
+  function applyLang() {
+    stopSpeech(); stopMic();
+    document.documentElement.lang = state.lang;
+    $('#mic').setAttribute('aria-label', t('micLabel'));
+    $('#mic').setAttribute('title', t('micLabel'));
+    document.querySelectorAll('[data-t]').forEach(n => { n.textContent = t(n.getAttribute('data-t')); });
+    document.querySelectorAll('[data-tp]').forEach(n => { n.setAttribute('placeholder', t(n.getAttribute('data-tp'))); });
+    $('#lang-id').setAttribute('aria-pressed', String(state.lang === 'id'));
+    $('#lang-en').setAttribute('aria-pressed', String(state.lang === 'en'));
+    renderRolebar(); renderChips(); renderChat(); vRefresh();
+    if (state.view === 'kenali') renderKenali();
+    if (state.view === 'kuis') renderKuis();
+    if (state.view === 'panel-tim') renderTim();
+  }
+
+  function resetKiosk() {
+    state.role = null; state.well = null; state.voice = false;
+    state.quiz = { i: 0, score: 0, picked: null, done: false };
+    initChat();
+    $('#q').value = '';
+    closeSheet();
+    if (location.hash.slice(1) !== 'tanya') location.hash = 'tanya';
+    applyLang();
+    route();
+    toast(t('kioskReset'));
+  }
+
+  /* ---------- Suara ---------- */
+  const LEAD = { emergency: 'emergency', dose: 'dose', personal: 'personal', none: 'none', inject: 'inject', greet: 'greet', thanks: 'thanks' };
+  const synth = window.speechSynthesis || null;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  const langTag = () => (state.lang === 'id' ? 'id-ID' : 'en-US');
+  let voices = [];
+  function loadVoices() { try { voices = synth ? synth.getVoices() : []; } catch (e) { voices = []; } }
+  if (synth) {
+    loadVoices();
+    try { synth.addEventListener('voiceschanged', loadVoices); } catch (e) { synth.onvoiceschanged = loadVoices; }
+  }
+  function pickVoice() {
+    return voices.find(v => v.lang && v.lang.toLowerCase().replace('_', '-').indexOf(state.lang) === 0) || null;
+  }
+  function speakable(s) {
+    const L = state.lang;
+    return String(s)
+      .replace(/\bx\b/g, L === 'id' ? 'kali' : 'by')
+      .replace(/info@alergen\.unair\.ac\.id/g, L === 'id' ? 'info at alergen titik unair titik ac titik id' : 'info at alergen dot unair dot ac dot id')
+      .replace(/\b119\b/g, L === 'id' ? 'satu satu sembilan' : 'one one nine')
+      .replace(/\s+/g, ' ');
+  }
+  function botSpeech(m) {
+    const res = m.res, parts = [];
+    if (LEAD[res.kind]) parts.push(t(LEAD[res.kind]));
+    if (res.kind !== 'dose') {
+      res.chunks.forEach(c => {
+        parts.push(c.text[state.lang]);
+        if (m.role === 'nakes' && c.tech) parts.push(c.tech[state.lang]);
+      });
+    }
+    return parts.join(' ');
+  }
+  let speaking = null;
+  function stopSpeech() {
+    if (synth) { try { synth.cancel(); } catch (e) { /* abaikan */ } }
+    if (speaking) {
+      if (speaking.btn) { speaking.btn.textContent = t('listen'); speaking.btn.setAttribute('aria-pressed', 'false'); }
+      speaking = null;
+    }
+  }
+  function speak(text, btnEl) {
+    if (!synth || typeof SpeechSynthesisUtterance === 'undefined') { toast(t('ttsNone')); return; }
+    stopSpeech();
+    const u = new SpeechSynthesisUtterance(speakable(text));
+    u.lang = langTag();
+    const v = pickVoice();
+    if (v) u.voice = v;
+    u.rate = 0.95;
+    const done = () => { if (speaking && speaking.u === u) stopSpeech(); };
+    u.onend = done;
+    u.onerror = ev => { done(); if (ev && ev.error && ev.error !== 'canceled' && ev.error !== 'interrupted') toast(t('ttsNone')); };
+    speaking = { u: u, btn: btnEl };
+    if (btnEl) { btnEl.textContent = t('stop'); btnEl.setAttribute('aria-pressed', 'true'); }
+    try { synth.speak(u); } catch (e) { done(); toast(t('ttsNone')); }
+  }
+
+  let rec = null, listening = false;
+  function setListening(on) {
+    listening = on;
+    const m = $('#mic');
+    m.setAttribute('aria-pressed', String(on));
+    $('#q').setAttribute('placeholder', on ? t('listening') : t('placeholder'));
+  }
+  function stopMic() {
+    if (rec) { try { rec.abort(); } catch (e) { /* abaikan */ } }
+    setListening(false);
+  }
+  function toggleMic() {
+    touch();
+    if (listening) { try { rec.stop(); } catch (e) { stopMic(); } return; }
+    stopSpeech();
+    let r;
+    try { r = new SR(); } catch (e) { toast(t('micDenied')); return; }
+    rec = r;
+    r.lang = langTag(); r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+    let finalText = '', failed = false;
+    r.onresult = ev => {
+      let interim = '';
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const res = ev.results[i];
+        if (res.isFinal) finalText += res[0].transcript; else interim += res[0].transcript;
+      }
+      $('#q').value = (finalText + interim).trim();
+    };
+    r.onerror = ev => {
+      failed = true;
+      const code = ev && ev.error;
+      if (code === 'no-speech') toast(t('micNoSpeech'));
+      else if (code !== 'aborted') toast(t('micDenied'));
+    };
+    r.onend = () => {
+      setListening(false);
+      const v = $('#q').value.trim();
+      $('#q').value = '';
+      rec = null;
+      if (!failed && v) ask(v);
+    };
+    try { r.start(); setListening(true); } catch (e) { toast(t('micDenied')); setListening(false); rec = null; }
+  }
+  function micSetup() {
+    const m = $('#mic');
+    if (!SR) { m.hidden = true; return; }
+    m.hidden = false;
+    m.addEventListener('click', toggleMic);
+  }
+
+  /* ---------- Mode suara (antarmuka hanya lewat suara) ---------- */
+  const vm = { token: 0, running: false, open: false, turns: 0, silent: 0, last: '', rec: null, st: 'ready' };
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const RXV = {
+    end: /^(ok |oke |baik )?(selesai|sudah selesai|sudah cukup|cukup|keluar|berhenti|stop|sampai jumpa|bye|goodbye|exit|done|that s all|that is all|i am done|i m done|saya selesai|sudah itu saja|itu saja)( terima kasih| thanks| thank you)?$/,
+    en: /\b(bahasa inggris|in english|english please|speak english|ganti ke inggris)\b/,
+    id: /\b(bahasa indonesia|in indonesian|speak indonesian|ganti ke indonesia)\b/,
+    staff: /\b(panggil (staf|petugas)|call (the )?staff|hubungi staf|minta staf|need (a )?staff)\b/,
+    repeat: /^(ulangi|ulang|bisa diulang|tolong diulang|diulang|repeat|say that again|once more|sekali lagi)\b/,
+    me: /\b(saya|aku|i am|i m|sebagai|as a)\b/
+  };
+  const ROLE_RX = [
+    ['nakes', /\b(dokter|perawat|bidan|apoteker|tenaga kesehatan|nakes|doctor|nurse|pharmacist|clinician|healthcare|physician)\b/],
+    ['mitra', /\b(investor|mitra|industri|partner|perusahaan|company)\b/],
+    ['keluarga', /\b(keluarga|orang tua|wali|family|parent|relative)\b/],
+    ['umum', /\b(masyarakat umum|pengunjung|general public|visitor)\b/]
+  ];
+
+  function buildVoicePatch() {
+    const svg = $('#vo-patch');
+    svg.appendChild(svgEl('rect', { class: 'body', x: 10, y: 8, width: 100, height: 284, rx: 14 }));
+    let i = 0;
+    for (let r = 0; r < 5; r++) {
+      [38, 82].forEach(cx => {
+        const c = svgEl('circle', { class: 'w', cx: cx, cy: 46 + r * 52, r: 17 });
+        c.setAttribute('style', '--i:' + i++);
+        svg.appendChild(c);
+      });
+    }
+  }
+  function vSet(name) {
+    vm.st = name;
+    $('#vo-patch').setAttribute('class', 'vo-patch st-' + name);
+    $('#vo-status').textContent = t('v_' + name);
+  }
+  function vShowStart(show) { $('#vo-start').hidden = !show; $('#vo-hint').hidden = show; $('#vo-tap').hidden = !show; }
+  function vBot(text, res) {
+    const box = $('#vo-bot');
+    box.textContent = '';
+    if (!text) { box.hidden = true; return; }
+    box.hidden = false;
+    box.appendChild(el('p', null, text));
+    if (res && res.chunks && res.chunks.length && ['answer', 'personal', 'emergency'].indexOf(res.kind) >= 0) {
+      const s = el('div', 'sources');
+      s.appendChild(el('span', 'lbl', t('sources')));
+      res.chunks.forEach(c => s.appendChild(sourceRow(c)));
+      box.appendChild(s);
+    }
+    box.scrollTop = 0;
+  }
+  function vRefresh() {
+    if (!$('#vo')) return;
+    $('#vo-exit').textContent = t('vExit');
+    $('#vo-hint').textContent = t('vHint');
+    $('#vo-tap').textContent = t('vTap');
+    $('#vo-demo-lbl').textContent = t('vDemo');
+    const row = $('#vo-demo-row');
+    row.textContent = '';
+    t('vSamples').forEach(s => row.appendChild(btn(s, 'chip', () => vDemo(s))));
+    $('#vo').setAttribute('aria-label', t('voiceBtn'));
+    if (vm.open) vSet(vm.st);
+  }
+
+  function say(text, token) {
+    return new Promise(resolve => {
+      if (!synth || typeof SpeechSynthesisUtterance === 'undefined') { resolve(false); return; }
+      try { synth.cancel(); } catch (e) { /* abaikan */ }
+      const clean = speakable(text);
+      const parts = (clean.match(/[^.!?]+[.!?]*/g) || [clean]).map(s => s.trim()).filter(Boolean);
+      let i = 0, ok = true;
+      const next = () => {
+        if (token !== vm.token || i >= parts.length) { resolve(ok); return; }
+        const part = parts[i++];
+        const u = new SpeechSynthesisUtterance(part);
+        u.lang = langTag();
+        const v = pickVoice();
+        if (v) u.voice = v;
+        u.rate = 0.95;
+        let fin = false;
+        const go = good => { if (fin) return; fin = true; clearTimeout(wd); if (!good) ok = false; next(); };
+        const wd = setTimeout(() => go(true), Math.max(4000, part.length * 130));
+        u.onend = () => go(true);
+        u.onerror = ev => {
+          const c = ev && ev.error;
+          if (c === 'canceled' || c === 'interrupted') { fin = true; clearTimeout(wd); resolve(true); } else go(false);
+        };
+        try { synth.speak(u); } catch (e) { go(false); }
+      };
+      next();
+    });
+  }
+
+  function hear() {
+    return new Promise(resolve => {
+      let r;
+      try { r = new SR(); } catch (e) { resolve({ text: '', error: 'not-allowed' }); return; }
+      vm.rec = r;
+      r.lang = langTag(); r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+      let finalText = '', err = null, done = false;
+      const finish = () => { if (done) return; done = true; clearTimeout(guard); vm.rec = null; resolve({ text: finalText.trim(), error: err }); };
+      const guard = setTimeout(() => { try { r.stop(); } catch (e) { finish(); } }, 15000);
+      r.onresult = ev => {
+        let interim = '';
+        for (let i = ev.resultIndex; i < ev.results.length; i++) {
+          const res = ev.results[i];
+          if (res.isFinal) finalText += res[0].transcript; else interim += res[0].transcript;
+        }
+        $('#vo-you').textContent = t('vYou') + ': ' + (finalText + interim).trim();
+      };
+      r.onerror = ev => { err = (ev && ev.error) || 'error'; };
+      r.onend = finish;
+      try { r.start(); } catch (e) { err = 'not-allowed'; finish(); }
+    });
+  }
+
+  async function micProbe() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return true;
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+      s.getTracks().forEach(tr => tr.stop());
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function vBlocked(kind) {
+    vm.token++; vm.running = false;
+    vSet('blocked');
+    vBot(kind === 'network' ? t('vNet') : kind === 'nosr' ? t('vNoSR') : t('vMicBlocked'), null);
+    $('#vo-you').textContent = '';
+    vShowStart(true);
+    $('#vo-demo').hidden = false;
+  }
+
+  async function endSession(token, auto) {
+    if (token !== vm.token) return;
+    vSet('speaking');
+    vBot(t(auto ? 'vTimeout' : 'vBye'), null);
+    await say(t(auto ? 'vTimeout' : 'vBye'), token);
+    if (token !== vm.token) return;
+    vm.token++; vm.running = false;
+    vSet('ready'); vShowStart(true);
+    $('#vo-you').textContent = ''; $('#vo-demo').hidden = true;
+  }
+
+  async function handle(text, token) {
+    touch();
+    const n = norm(text), words = n.split(' ').length;
+    $('#vo-you').textContent = t('vYou') + ': ' + text;
+    const speakIt = async (msg, res) => { vBot(msg, res || null); vSet('speaking'); await say(msg, token); };
+
+    if (RXV.end.test(n)) { await endSession(token, false); return; }
+    if (words <= 6 && RXV.en.test(n)) { state.lang = 'en'; LS.set('alergen-lang', 'en'); applyLang(); await speakIt(t('vLangSet')); return; }
+    if (words <= 6 && RXV.id.test(n)) { state.lang = 'id'; LS.set('alergen-lang', 'id'); applyLang(); await speakIt(t('vLangSet')); return; }
+    if (words <= 6 && RXV.staff.test(n)) {
+      state.log.push({ t: Date.now(), q: '', kind: 'staff', id: null }); saveLog();
+      await speakIt(t('vStaff'));
+      return;
+    }
+    if (words <= 4 && RXV.repeat.test(n)) { await speakIt(vm.last || t('vNoRepeat')); return; }
+    if (words <= 7 && RXV.me.test(n)) {
+      const hit = ROLE_RX.find(x => x[1].test(n));
+      if (hit) {
+        state.role = hit[0]; renderRolebar(); renderChips();
+        await speakIt(t('vRole').replace('%s', roleLabel(hit[0])));
+        return;
+      }
+    }
+
+    const res = respond(text, state.role);
+    state.log.push({ t: Date.now(), q: text.replace(/[0-9]{6,}/g, '***'), kind: res.kind, id: res.chunks[0] ? res.chunks[0].id : null });
+    saveLog();
+    state.msgs.push({ from: 'user', text: text });
+    state.msgs.push({ from: 'bot', type: 'answer', res: res, role: state.role });
+    renderChat();
+    let msg = botSpeech({ res: res, role: state.role });
+    if (res.kind === 'greet') msg = t('vGreetShort');
+    if (res.kind === 'thanks') msg = t('vThanksShort');
+    vm.last = msg;
+    await speakIt(msg, res);
+    vm.turns++;
+    if (token === vm.token && res.kind === 'answer' && vm.turns % 3 === 1) await say(t('vFollow'), token);
+  }
+
+  async function runSession(lang) {
+    if (lang && lang !== state.lang) { state.lang = lang; LS.set('alergen-lang', lang); applyLang(); }
+    const token = ++vm.token;
+    vm.running = true; vm.turns = 0; vm.silent = 0; vm.last = '';
+    vShowStart(false); $('#vo-demo').hidden = true; vBot('', null); $('#vo-you').textContent = '';
+    if (!SR) { vBlocked('nosr'); return; }
+    vSet('thinking');
+    const ok = await micProbe();
+    if (token !== vm.token) return;
+    if (!ok) { vBlocked('mic'); return; }
+    vSet('speaking');
+    vBot(t('vGreet'), null);
+    await say(t('vGreet'), token);
+    await sleep(300);
+    while (token === vm.token) {
+      touch();
+      vSet('listening');
+      const r = await hear();
+      if (token !== vm.token) return;
+      if (r.error && ['not-allowed', 'service-not-allowed', 'audio-capture', 'language-not-supported'].indexOf(r.error) >= 0) { vBlocked('mic'); return; }
+      if (r.error === 'network') { vBlocked('network'); return; }
+      if (!r.text) {
+        vm.silent++;
+        if (vm.silent >= 6) { await endSession(token, true); return; }
+        if (vm.silent === 3) { vSet('speaking'); vBot(t('vStill'), null); await say(t('vStill'), token); }
+        await sleep(300);
+        continue;
+      }
+      vm.silent = 0;
+      vSet('thinking');
+      await handle(r.text, token);
+      await sleep(350);
+    }
+  }
+
+  async function vDemo(text) {
+    const token = ++vm.token;
+    vm.running = true;
+    vSet('thinking');
+    await handle(text, token);
+    if (token === vm.token) { vm.running = false; vSet('blocked'); }
+  }
+
+  function openVoice() {
+    vm.open = true;
+    stopSpeech(); stopMic();
+    $('#vo').hidden = false;
+    $('#vo-you').textContent = ''; vBot('', null); $('#vo-demo').hidden = true;
+    vSet('ready'); vShowStart(true); vRefresh();
+    $('#vo-go-id').focus();
+  }
+  function closeVoice() {
+    vm.open = false; vm.token++; vm.running = false;
+    if (vm.rec) { try { vm.rec.abort(); } catch (e) { /* abaikan */ } }
+    if (synth) { try { synth.cancel(); } catch (e) { /* abaikan */ } }
+    $('#vo').hidden = true;
+  }
+
+  /* ---------- Pasang pendengar ---------- */
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { touch(); location.hash = b.getAttribute('data-view'); }));
+  window.addEventListener('hashchange', route);
+  $('#lang-id').addEventListener('click', () => { state.lang = 'id'; LS.set('alergen-lang', 'id'); applyLang(); });
+  $('#lang-en').addEventListener('click', () => { state.lang = 'en'; LS.set('alergen-lang', 'en'); applyLang(); });
+  $('#btn-staff').addEventListener('click', () => { touch(); openSheet(); });
+  $('#btn-voice').addEventListener('click', () => { touch(); location.hash = 'suara'; });
+  $('#vo-exit').addEventListener('click', () => { location.hash = 'tanya'; });
+  $('#vo-go-id').addEventListener('click', () => { touch(); runSession('id'); });
+  $('#vo-go-en').addEventListener('click', () => { touch(); runSession('en'); });
+  $('#vo-patch').addEventListener('click', () => { if (vm.running && synth) { try { synth.cancel(); } catch (e) { /* abaikan */ } } });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && vm.open && vm.running) {
+      vm.token++; vm.running = false;
+      if (vm.rec) { try { vm.rec.abort(); } catch (e) { /* abaikan */ } }
+      if (synth) { try { synth.cancel(); } catch (e) { /* abaikan */ } }
+      vSet('ready'); vShowStart(true);
+    }
+  });
+  $('#sheet-close').addEventListener('click', closeSheet);
+  $('#scrim').addEventListener('click', e => { if (e.target.id === 'scrim') closeSheet(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+  $('#sheet-ok').addEventListener('click', () => {
+    state.log.push({ t: Date.now(), q: '', kind: 'staff', id: null });
+    saveLog(); closeSheet(); toast(t('staffToast'));
+    if (state.view === 'panel-tim') renderTim();
+  });
+  $('#form').addEventListener('submit', e => { e.preventDefault(); const i = $('#q'); const v = i.value; i.value = ''; ask(v); });
+  ['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, touch, { passive: true }));
+  setInterval(() => { if (state.kiosk && Date.now() - state.last > 90000) { state.last = Date.now(); resetKiosk(); } }, 5000);
+
+  buildVoicePatch();
+  micSetup();
+  initChat();
+  applyLang();
+  route();
+})();
+</script>
+
+</body></html>

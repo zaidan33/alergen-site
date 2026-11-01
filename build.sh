@@ -40,6 +40,8 @@ check /images/patch-samping.webp 200
 check /images/patch-miring.webp 200
 check /images/detail-makro.webp 200
 check /images/cta-gelap.webp 200
+check /expo/ 200
+check /expo/index.html 200
 check /halaman-tidak-ada 404
 
 echo "==> content assertions"
@@ -60,6 +62,36 @@ print("  ok   html shell + content" if not missing and not found
       else f"  FAIL missing: {missing}; banned present: {found}")
 sys.exit(1 if missing or found else 0)
 PY
+
+echo "==> expo prototype assertions"
+curl -fsS "http://127.0.0.1:$PORT/expo/" > /tmp/alergen-expo.html
+python3 - <<'PY'
+import sys
+h = open('/tmp/alergen-expo.html', encoding='utf-8').read()
+need = ['<html lang="id">', 'width=device-width', 'noindex,nofollow',
+        'Alergen Expo', 'Mode suara', 'Patch diagnostik Alergen',
+        'IDS000011522', 'function respond', 'MIN_COV', 'Kuis singkat',
+        'Panel tim', 'speechSynthesis', 'webkitSpeechRecognition', 'localStorage']
+ban = ['http://cdn', 'unpkg.com', 'cdn.jsdelivr.net']
+missing = [n for n in need if n not in h]
+found = [b for b in ban if b in h]
+print("  ok   expo shell + engine" if not missing and not found
+      else f"  FAIL missing: {missing}; banned present: {found}")
+sys.exit(1 if missing or found else 0)
+PY
+
+echo "==> permission policy (voice mode needs microphone=self)"
+for p in / /expo/; do
+  pol=$(curl -sI "http://127.0.0.1:$PORT$p" | tr -d '\r' | awk -F': ' 'tolower($1)=="permissions-policy"{print $2}')
+  case "$pol" in
+    *"microphone=(self)"*) printf "  ok   %-10s %s\n" "$p" "$pol" ;;
+    *) printf "  FAIL %-10s got=%s\n" "$p" "$pol"; fail=1 ;;
+  esac
+done
+
+echo "==> robots keeps /expo/ out of search"
+curl -fsS "http://127.0.0.1:$PORT/robots.txt" | grep -q 'Disallow: /expo/' \
+  && echo "  ok   robots disallow /expo/" || { echo "  FAIL robots disallow"; fail=1; }
 
 echo "==> asset count in image"
 sudo docker exec "$NAME" sh -c 'ls /usr/share/nginx/html /usr/share/nginx/html/images | tr "\n" " "; echo'

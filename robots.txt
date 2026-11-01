@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /expo/
 
 Sitemap: https://alergen.airlangga.link/sitemap.xml
