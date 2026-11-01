@@ -1572,11 +1572,24 @@ function respond(text, role) {
     $('#vo-you').textContent = ''; $('#vo-demo').hidden = true;
   }
 
+  function voiceTrim(s) {
+    const clean = String(s).replace(/\s+/g, ' ').trim();
+    const parts = clean.match(/[^.!?]+[.!?]+/g) || [clean];
+    let out = '';
+    for (let i = 0; i < parts.length; i++) {
+      const cand = (out + ' ' + parts[i]).trim();
+      if (out && cand.split(/\s+/).length > 32) break;
+      out = cand;
+      if (out.split(/\s+/).length >= 26) break;
+    }
+    if (!out) out = clean.split(' ').slice(0, 30).join(' ');
+    return out.trim();
+  }
   async function handle(text, token) {
     touch();
     const n = norm(text), words = n.split(' ').length;
     $('#vo-you').textContent = t('vYou') + ': ' + text;
-    const speakIt = async (msg, res) => { vBot(msg, res || null); vSet('speaking'); await say(msg, token); };
+    const speakIt = async (msg, res) => { vBot(msg, res || null); vSet('speaking'); await say(voiceTrim(msg), token); };
 
     if (RXV.end.test(n)) { await endSession(token, false); return; }
     if (words <= 6 && RXV.en.test(n)) { state.lang = 'en'; LS.set('alergen-lang', 'en'); applyLang(); await speakIt(t('vLangSet')); return; }
