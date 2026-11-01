@@ -660,7 +660,7 @@ function respond(text, role) {
       vTap: 'Setelah mulai, cukup bicara. Tidak perlu menyentuh layar.',
       vHint: 'Coba katakan: "Apa itu patch Alergen?", "Apakah aman untuk anak?", atau "Panggil staf". Katakan "selesai" bila sudah cukup.',
       vYou: 'Anda',
-      vGreet: 'Halo, saya asisten Alergen. Anda bisa bertanya tentang alergi, patch diagnostik, atau tablet sublingual. Silakan bicara. Katakan selesai bila sudah cukup.',
+      vGreet: 'Halo, saya asisten Alergen. Silakan bertanya.',
       vGreetShort: 'Halo! Silakan sampaikan pertanyaan Anda.', vThanksShort: 'Sama-sama. Ada pertanyaan lain?',
       vStill: 'Apakah Anda masih di sana? Silakan ucapkan pertanyaan Anda, atau katakan selesai.',
       vBye: 'Terima kasih. Sampai jumpa di booth kami.', vTimeout: 'Saya istirahat dulu. Sentuh layar bila ingin bertanya lagi.',
@@ -718,7 +718,7 @@ function respond(text, role) {
       vTap: 'Once started, just speak. No need to touch the screen.',
       vHint: 'Try saying: "What is the Alergen patch?", "Is it safe for children?" or "Call staff". Say "done" when you are finished.',
       vYou: 'You',
-      vGreet: 'Hello, I am the Alergen assistant. You can ask about allergy, the diagnostic patch or the sublingual tablet. Please go ahead and speak. Say done when you are finished.',
+      vGreet: 'Hi, I am the Alergen assistant. Go ahead and ask.',
       vGreetShort: 'Hello! Please go ahead with your question.', vThanksShort: 'You are welcome. Any other question?',
       vStill: 'Are you still there? Please say your question, or say done.',
       vBye: 'Thank you. See you at our booth.', vTimeout: 'I will take a break now. Touch the screen if you want to ask again.',
@@ -1236,21 +1236,80 @@ function respond(text, role) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
   const langTag = () => (state.lang === 'id' ? 'id-ID' : 'en-US');
   let voices = [];
-  function loadVoices() { try { voices = synth ? synth.getVoices() : []; } catch (e) { voices = []; } }
+  function loadVoices() { try { voices = synth ? synth.getVoices() : []; } catch (e) { voices = []; } voiceCache = null; }
   if (synth) {
     loadVoices();
     try { synth.addEventListener('voiceschanged', loadVoices); } catch (e) { synth.onvoiceschanged = loadVoices; }
   }
+  let voiceCache = null;
   function pickVoice() {
-    return voices.find(v => v.lang && v.lang.toLowerCase().replace('_', '-').indexOf(state.lang) === 0) || null;
+    if (voiceCache) return voiceCache;
+    const tag = state.lang === 'id' ? ['id-id', 'id'] : ['en-us', 'en-gb', 'en'];
+    const score = v => {
+      const lang = (v.lang || '').toLowerCase().replace('_', '-');
+      const match = tag.some(t => lang === t || lang.indexOf(t + '-') === 0);
+      if (!match) return -1;
+      let s = 1;
+      if (/google/i.test(v.name)) s += 6;
+      else if (/natural|neural|wavenet|premium|enhanced/i.test(v.name)) s += 5;
+      else if (/microsoft/i.test(v.name)) s += 4;
+      if (!v.localService) s += 2;
+      return s;
+    };
+    let best = null, bs = 0;
+    (voices || []).forEach(v => { const s = score(v); if (s > bs) { bs = s; best = v; } });
+    voiceCache = best;
+    return best;
+  }
+  let warmed = false;
+  function warmUp() {
+    if (warmed || !synth) return;
+    warmed = true;
+    loadVoices();
+    try {
+      const u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0; u.rate = 1.4; u.lang = langTag();
+      const v = pickVoice(); if (v) u.voice = v;
+      synth.speak(u);
+    } catch (e) { /* abaikan */ }
+  }
+  const NUM_ID = { 0: 'nol', 1: 'satu', 2: 'dua', 3: 'tiga', 4: 'empat', 5: 'lima', 6: 'enam', 7: 'tujuh', 8: 'delapan', 9: 'sembilan', 10: 'sepuluh', 11: 'sebelas', 12: 'dua belas' };
+  function numId(n) {
+    const k = String(n);
+    if (NUM_ID[k]) return NUM_ID[k];
+    return k.split('').map(d => NUM_ID[d] || d).join(' ');
   }
   function speakable(s) {
     const L = state.lang;
     return String(s)
+      .replace(/IDS\s?(\d{9})/g, (m, d) => 'I D S ' + d.split('').join(' '))
+      .replace(/(\d+(?:[.,]\d+)?)\s*cm\b/g, (m, n) => (L === 'id' ? numId(n) + ' sentimeter' : n + ' centimetres'))
+      .replace(/(\d+(?:[.,]\d+)?)\s*mm\b/g, (m, n) => (L === 'id' ? numId(n) + ' milimeter' : n + ' millimetres'))
       .replace(/\bx\b/g, L === 'id' ? 'kali' : 'by')
       .replace(/info@alergen\.unair\.ac\.id/g, L === 'id' ? 'info at alergen titik unair titik ac titik id' : 'info at alergen dot unair dot ac dot id')
       .replace(/\b119\b/g, L === 'id' ? 'satu satu sembilan' : 'one one nine')
-      .replace(/\s+/g, ' ');
+      .replace(/\([^)]*\)/g, ' ')
+      .replace(/["“”]/g, '')
+      .replace(/[—–]/g, ',')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  function splitClauses(text) {
+    const clean = speakable(text);
+    const out = [];
+    clean.split(/(?<=[.!?;:])\s+/).forEach(seg => {
+      const words = seg.trim().split(/\s+/).filter(Boolean);
+      if (!words.length) return;
+      if (words.length <= 16) { out.push(seg.trim()); return; }
+      let cur = [];
+      words.forEach(w => {
+        cur.push(w);
+        const pause = /[,]$/.test(w) && cur.length >= 5;
+        if (pause || cur.length >= 13) { out.push(cur.join(' ')); cur = []; }
+      });
+      if (cur.length) out.push(cur.join(' '));
+    });
+    return out.filter(Boolean);
   }
   function botSpeech(m) {
     const res = m.res, parts = [];
@@ -1278,7 +1337,7 @@ function respond(text, role) {
     u.lang = langTag();
     const v = pickVoice();
     if (v) u.voice = v;
-    u.rate = 0.95;
+    u.rate = 1.02;
     const done = () => { if (speaking && speaking.u === u) stopSpeech(); };
     u.onend = done;
     u.onerror = ev => { done(); if (ev && ev.error && ev.error !== 'canceled' && ev.error !== 'interrupted') toast(t('ttsNone')); };
@@ -1338,7 +1397,8 @@ function respond(text, role) {
   }
 
   /* ---------- Mode suara (antarmuka hanya lewat suara) ---------- */
-  const vm = { token: 0, running: false, open: false, turns: 0, silent: 0, last: '', rec: null, st: 'ready' };
+  const vm = { token: 0, running: false, open: false, turns: 0, silent: 0, last: '', rec: null, st: 'ready', recObj: null,
+    metrics: { endpoint_ms: null, first_audio_ms: null, llm_ms: null, errors: 0, turns: 0, gaps_ms: [] } };
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const RXV = {
     end: /^(ok |oke |baik )?(selesai|sudah selesai|sudah cukup|cukup|keluar|berhenti|stop|sampai jumpa|bye|goodbye|exit|done|that s all|that is all|i am done|i m done|saya selesai|sudah itu saja|itu saja)( terima kasih| thanks| thank you)?$/,
@@ -1403,48 +1463,76 @@ function respond(text, role) {
   function say(text, token) {
     return new Promise(resolve => {
       if (!synth || typeof SpeechSynthesisUtterance === 'undefined') { resolve(false); return; }
-      try { synth.cancel(); } catch (e) { /* abaikan */ }
-      const clean = speakable(text);
-      const parts = (clean.match(/[^.!?]+[.!?]*/g) || [clean]).map(s => s.trim()).filter(Boolean);
-      let i = 0, ok = true;
-      const next = () => {
-        if (token !== vm.token || i >= parts.length) { resolve(ok); return; }
-        const part = parts[i++];
+      const parts = splitClauses(text);
+      if (!parts.length) { resolve(true); return; }
+      const voice = pickVoice();
+      let pending = parts.length;
+      let started = false;
+      const t0 = Date.now();
+      const settle = good => {
+        if (!started) { started = true; vm.metrics.first_audio_ms = Date.now() - t0; }
+        if (!good) vm.metrics.errors++;
+        if (--pending === 0) resolve(good);
+      };
+      parts.forEach(part => {
         const u = new SpeechSynthesisUtterance(part);
         u.lang = langTag();
-        const v = pickVoice();
-        if (v) u.voice = v;
-        u.rate = 0.95;
-        let fin = false;
-        const go = good => { if (fin) return; fin = true; clearTimeout(wd); if (!good) ok = false; next(); };
-        const wd = setTimeout(() => go(true), Math.max(4000, part.length * 130));
-        u.onend = () => go(true);
+        if (voice) u.voice = voice;
+        u.rate = 1.02;
+        u.pitch = 1;
+        u.onstart = () => { if (!started) { started = true; vm.metrics.first_audio_ms = Date.now() - t0; } };
+        u.onend = () => settle(true);
         u.onerror = ev => {
           const c = ev && ev.error;
-          if (c === 'canceled' || c === 'interrupted') { fin = true; clearTimeout(wd); resolve(true); } else go(false);
+          if (c === 'canceled' || c === 'interrupted') { pending = 0; resolve(true); return; }
+          settle(false);
         };
-        try { synth.speak(u); } catch (e) { go(false); }
-      };
-      next();
+        try { synth.speak(u); } catch (e) { settle(false); }
+      });
     });
   }
 
+  function getRec() {
+    if (vm.recObj) return vm.recObj;
+    try { vm.recObj = new SR(); } catch (e) { return null; }
+    return vm.recObj;
+  }
   function hear() {
     return new Promise(resolve => {
-      let r;
-      try { r = new SR(); } catch (e) { resolve({ text: '', error: 'not-allowed' }); return; }
+      const r = getRec();
+      if (!r) { resolve({ text: '', error: 'not-allowed' }); return; }
       vm.rec = r;
       r.lang = langTag(); r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
-      let finalText = '', err = null, done = false;
-      const finish = () => { if (done) return; done = true; clearTimeout(guard); vm.rec = null; resolve({ text: finalText.trim(), error: err }); };
-      const guard = setTimeout(() => { try { r.stop(); } catch (e) { finish(); } }, 15000);
+      let finalText = '', interimText = '', err = null, done = false, lastChange = 0, ticker = null;
+      const t0 = Date.now();
+      const finish = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(guard); clearInterval(ticker);
+        r.onresult = r.onerror = r.onend = null;
+        vm.rec = null;
+        if (finalText || interimText) vm.metrics.endpoint_ms = Date.now() - t0;
+        resolve({ text: (finalText || interimText).trim(), error: err });
+      };
+      const guard = setTimeout(() => { try { r.stop(); } catch (e) { finish(); } }, 8000);
+      ticker = setInterval(() => {
+        if (done) return;
+        const txt = (finalText + ' ' + interimText).trim();
+        if (txt.split(/\s+/).filter(Boolean).length >= 2 && Date.now() - lastChange > 600) {
+          try { r.stop(); } catch (e) { finish(); }
+        }
+      }, 100);
       r.onresult = ev => {
-        let interim = '';
+        let fin = '', int = '';
         for (let i = ev.resultIndex; i < ev.results.length; i++) {
           const res = ev.results[i];
-          if (res.isFinal) finalText += res[0].transcript; else interim += res[0].transcript;
+          if (res.isFinal) fin += res[0].transcript; else int += res[0].transcript;
         }
-        $('#vo-you').textContent = t('vYou') + ': ' + (finalText + interim).trim();
+        if (fin) finalText += fin;
+        interimText = int;
+        lastChange = Date.now();
+        $('#vo-you').textContent = t('vYou') + ': ' + (finalText + interimText).trim();
+        if (fin) { try { r.stop(); } catch (e) { finish(); } }
       };
       r.onerror = ev => { err = (ev && ev.error) || 'error'; };
       r.onend = finish;
@@ -1452,13 +1540,16 @@ function respond(text, role) {
     });
   }
 
+  let micOk = null;
   async function micProbe() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return true;
+    if (micOk !== null) return micOk;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { micOk = true; return micOk; }
     try {
       const s = await navigator.mediaDevices.getUserMedia({ audio: true });
       s.getTracks().forEach(tr => tr.stop());
-      return true;
-    } catch (e) { return false; }
+      micOk = true;
+    } catch (e) { micOk = false; }
+    return micOk;
   }
 
   function vBlocked(kind) {
@@ -1526,14 +1617,16 @@ function respond(text, role) {
     vm.running = true; vm.turns = 0; vm.silent = 0; vm.last = '';
     vShowStart(false); $('#vo-demo').hidden = true; vBot('', null); $('#vo-you').textContent = '';
     if (!SR) { vBlocked('nosr'); return; }
+    warmUp();
     vSet('thinking');
     const ok = await micProbe();
     if (token !== vm.token) return;
     if (!ok) { vBlocked('mic'); return; }
     vSet('speaking');
-    vBot(t('vGreet'), null);
-    await say(t('vGreet'), token);
-    await sleep(300);
+    const greet = t('vGreet');
+    vBot(greet, null);
+    await say(greet, token);
+    await sleep(120);
     while (token === vm.token) {
       touch();
       vSet('listening');
@@ -1543,15 +1636,15 @@ function respond(text, role) {
       if (r.error === 'network') { vBlocked('network'); return; }
       if (!r.text) {
         vm.silent++;
-        if (vm.silent >= 6) { await endSession(token, true); return; }
-        if (vm.silent === 3) { vSet('speaking'); vBot(t('vStill'), null); await say(t('vStill'), token); }
-        await sleep(300);
+        if (vm.silent >= 4) { await endSession(token, true); return; }
+        if (vm.silent === 2) { vSet('speaking'); vBot(t('vStill'), null); await say(t('vStill'), token); }
+        await sleep(120);
         continue;
       }
       vm.silent = 0;
       vSet('thinking');
       await handle(r.text, token);
-      await sleep(350);
+      await sleep(120);
     }
   }
 
@@ -1560,7 +1653,7 @@ function respond(text, role) {
     vm.running = true;
     vSet('thinking');
     await handle(text, token);
-    if (token === vm.token) { vm.running = false; vSet('blocked'); }
+    if (token === vm.token) { vm.running = false; vSet('ready'); }
   }
 
   function openVoice() {
@@ -1608,6 +1701,18 @@ function respond(text, role) {
   $('#form').addEventListener('submit', e => { e.preventDefault(); const i = $('#q'); const v = i.value; i.value = ''; ask(v); });
   ['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, touch, { passive: true }));
   setInterval(() => { if (state.kiosk && Date.now() - state.last > 90000) { state.last = Date.now(); resetKiosk(); } }, 5000);
+
+  /* Hook uji: dipakai verifikasi otomatis (tanpa mikrofon sungguhan). */
+  window.__expo = {
+    get state() { return { lang: state.lang, role: state.role, view: state.view, voice: state.voice, kiosk: state.kiosk }; },
+    ask, respond, splitClauses, speakable, pickVoice,
+    voice: {
+      metrics: vm.metrics,
+      start: runSession,
+      stop: () => { vm.token++; vm.running = false; stopSpeech(); vSet('ready'); },
+      debug: () => ({ st: vm.st, running: vm.running, silent: vm.silent, turns: vm.turns })
+    }
+  };
 
   buildVoicePatch();
   micSetup();
