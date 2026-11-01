@@ -71,7 +71,7 @@ h = open('/tmp/alergen-expo.html', encoding='utf-8').read()
 need = ['<html lang="id">', 'width=device-width', 'noindex,nofollow',
         'Alergen Expo', 'Mode suara', 'Patch diagnostik Alergen',
         'IDS000011522', 'function respond', 'MIN_COV', 'Kuis singkat',
-        'Panel tim', 'speechSynthesis', 'webkitSpeechRecognition', 'localStorage']
+        'Panel tim', 'speechSynthesis', 'webkitSpeechRecognition', 'localStorage', 'window.__expo', 'splitClauses']
 ban = ['http://cdn', 'unpkg.com', 'cdn.jsdelivr.net']
 missing = [n for n in need if n not in h]
 found = [b for b in ban if b in h]

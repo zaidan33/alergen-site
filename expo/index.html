@@ -1236,12 +1236,12 @@ function respond(text, role) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
   const langTag = () => (state.lang === 'id' ? 'id-ID' : 'en-US');
   let voices = [];
+  let voiceCache = null;
   function loadVoices() { try { voices = synth ? synth.getVoices() : []; } catch (e) { voices = []; } voiceCache = null; }
   if (synth) {
     loadVoices();
     try { synth.addEventListener('voiceschanged', loadVoices); } catch (e) { synth.onvoiceschanged = loadVoices; }
   }
-  let voiceCache = null;
   function pickVoice() {
     if (voiceCache) return voiceCache;
     const tag = state.lang === 'id' ? ['id-id', 'id'] : ['en-us', 'en-gb', 'en'];
