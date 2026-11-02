@@ -43,6 +43,7 @@ check /images/cta-gelap.webp 200
 check /images/booklet-cover.webp 200
 check /images/qr-booklet.png 200
 check /dokumen/booklet-alergi-ringan.pdf 200
+check /booklet 302
 check /expo/ 200
 check /expo/index.html 200
 check /halaman-tidak-ada 404
