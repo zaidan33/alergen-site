@@ -43,7 +43,7 @@ check /images/cta-gelap.webp 200
 check /images/booklet-cover.webp 200
 check /images/qr-booklet.png 200
 check /dokumen/booklet-alergi-ringan.pdf 200
-check /booklet 302
+check /booklet 200
 check /expo/ 200
 check /expo/index.html 200
 check /halaman-tidak-ada 404
@@ -88,19 +88,21 @@ sys.exit(1 if missing or found else 0)
 PY
 
 echo "==> booklet pdf integrity"
-curl -sI "http://127.0.0.1:$PORT/dokumen/booklet-alergi-ringan.pdf" | tr -d '\r' > /tmp/alergen-pdf-head
-ct=$(awk -F': ' 'tolower($1)=="content-type"{print $2}' /tmp/alergen-pdf-head)
-sz=$(curl -s -o /tmp/alergen-booklet.pdf -w '%{size_download}' "http://127.0.0.1:$PORT/dokumen/booklet-alergi-ringan.pdf")
-magic=$(head -c 5 /tmp/alergen-booklet.pdf)
-case "$ct" in
-  application/pdf*) printf "  ok   content-type %s\n" "$ct" ;;
-  *) printf "  FAIL content-type got=%s\n" "$ct"; fail=1 ;;
-esac
-if [ "$magic" = "%PDF-" ] && [ "${sz:-0}" -gt 7000000 ]; then
-  printf "  ok   pdf bytes %s, magic %s\n" "$sz" "$magic"
-else
-  printf "  FAIL pdf bytes=%s magic=%s\n" "$sz" "$magic"; fail=1
-fi
+for u in /dokumen/booklet-alergi-ringan.pdf /booklet; do
+  curl -sI "http://127.0.0.1:$PORT$u" | tr -d '\r' > /tmp/alergen-pdf-head
+  ct=$(awk -F': ' 'tolower($1)=="content-type"{print $2}' /tmp/alergen-pdf-head)
+  sz=$(curl -s -o /tmp/alergen-booklet.pdf -w '%{size_download}' "http://127.0.0.1:$PORT$u")
+  magic=$(head -c 5 /tmp/alergen-booklet.pdf)
+  case "$ct" in
+    application/pdf*) printf "  ok   %-34s content-type %s\n" "$u" "$ct" ;;
+    *) printf "  FAIL %-34s content-type got=%s\n" "$u" "$ct"; fail=1 ;;
+  esac
+  if [ "$magic" = "%PDF-" ] && [ "${sz:-0}" -gt 7000000 ]; then
+    printf "  ok   %-34s bytes %s, magic %s\n" "$u" "$sz" "$magic"
+  else
+    printf "  FAIL %-34s bytes=%s magic=%s\n" "$u" "$sz" "$magic"; fail=1
+  fi
+done
 
 echo "==> permission policy (voice mode needs microphone=self)"
 for p in / /expo/; do
