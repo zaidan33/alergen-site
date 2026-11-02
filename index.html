@@ -321,6 +321,25 @@ h1, h2, h3 { margin: 0; font-weight: 300; letter-spacing: -0.02em; text-wrap: ba
 [hidden] { display: none !important; }
 section[id], footer[id] { scroll-margin-top: 16px; }
 
+/* Booklet edukasi */
+.booklet { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 56px; align-items: start; }
+.booklet h2 { font-size: clamp(1.7rem, 3.2vw, 2.35rem); line-height: 1.15; margin-top: 14px; }
+.booklet .meta { display: flex; flex-wrap: wrap; gap: 4px 22px; margin-top: 24px; color: var(--muted); }
+.booklet .acts { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; margin-top: 28px; }
+.booklet .acts .alt { font-size: 13.5px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.booklet .acts .alt:hover { color: var(--ink); }
+.cover-card { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--card); }
+.cover-card img.cover { display: block; width: 100%; height: auto; }
+.cover-card .cap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border-top: 1px solid var(--line); background: var(--card); }
+.cover-card .cap p { font-size: 12px; color: var(--muted); max-width: 22ch; }
+.cover-card .qr { width: 84px; height: 84px; flex: none; image-rendering: pixelated; }
+/* Satu kolom di layar sempit: aturan ini sengaja ditaruh setelah blok dasar
+   di atas supaya tidak ditimpa urutan cascade. */
+@media (max-width: 860px) {
+  .booklet { grid-template-columns: minmax(0, 1fr); gap: 36px; }
+  .cover-card { max-width: 360px; }
+}
+
 /* Mobile nav: brand + CTA on one row, links become a scrollable strip. */
 @media (max-width: 640px) {
   .nav { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 12px; padding-block: 16px; }
@@ -352,6 +371,7 @@ section[id], footer[id] { scroll-margin-top: 16px; }
             <a href="#alergen">Alergen</a>
             <a href="#teknologi">Teknologi</a>
             <a href="#penelitian">Penelitian</a>
+            <a href="#booklet">Booklet</a>
             <a href="#tim">Tim</a>
           </div>
           <a class="btn light" href="#kontak">Hubungi tim</a>
@@ -539,6 +559,41 @@ section[id], footer[id] { scroll-margin-top: 16px; }
         </div>
         <div class="visual">
           <div class="slot"><span class="ph">images/detail-makro.webp<br>4:3.4, foto makro sumur</span><img src="images/detail-makro.webp" alt="Foto makro permukaan patch di area sumur ekstrak alergen" onerror="this.remove()"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec soft" id="booklet">
+    <div class="in">
+      <div class="box">
+        <div class="booklet">
+          <div>
+            <p class="dotlabel">Booklet edukasi</p>
+            <h2>Dari Gejala ke Toleransi</h2>
+            <div class="prose">
+              <p>Booklet 20 halaman ini menuntun pembaca memahami alergi sejak akarnya: bagaimana sistem imun mengenali alergen, bagaimana hasil uji patch dibaca, sampai bagaimana desensitisasi sublingual bekerja membangun toleransi.</p>
+              <p>Disusun untuk pasien, keluarga, dan tenaga kesehatan sebagai bahan edukasi di ruang tunggu, kelas, maupun booth pameran.</p>
+            </div>
+            <div class="meta mono">
+              <span>PDF · 7,7 MB</span><span>20 halaman</span><span>A5</span><span>Bahasa Indonesia</span>
+            </div>
+            <div class="acts">
+              <a class="btn" href="dokumen/booklet-alergi-ringan.pdf" download>Unduh booklet (PDF)</a>
+              <a class="alt" href="dokumen/booklet-alergi-ringan.pdf" target="_blank" rel="noopener">Baca di peramban</a>
+            </div>
+            <div class="note neutral">
+              <span class="mono">Catatan</span>
+              <p>Booklet bersifat edukasi dan tidak menggantikan konsultasi, diagnosis, atau pengobatan oleh tenaga kesehatan.</p>
+            </div>
+          </div>
+          <div class="cover-card">
+            <img class="cover" src="images/booklet-cover.webp" alt="Sampul booklet edukasi Dari Gejala ke Toleransi" width="760" height="1079" loading="lazy" decoding="async">
+            <div class="cap">
+              <p>Pindai kode untuk membuka booklet di ponsel.</p>
+              <img class="qr" src="images/qr-booklet.png" alt="Kode QR unduhan booklet alergi" width="84" height="84" loading="lazy" decoding="async">
+            </div>
+          </div>
         </div>
       </div>
     </div>

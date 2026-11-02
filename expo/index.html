@@ -150,6 +150,13 @@ h3{font-family:var(--f-display);font-weight:600;font-size:17px;margin:0 0 8px;te
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
 .card p{margin:0}
 .card p + p{margin-top:8px}
+.bk{display:flex;gap:14px;align-items:flex-start;margin-top:16px}
+.bk>.thumb{width:66px;flex:none;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.bk>.thumb img{display:block;width:100%;height:auto}
+.bk .t{flex:1;min-width:0}
+.bk h3{margin:0 0 4px;font-size:1rem;font-weight:600}
+.bk p{margin:0 0 10px;font-size:12.5px;color:var(--ink2)}
+.bk a.btn-fill{text-decoration:none;display:inline-block}
 .wellinfo{min-height:96px}
 .wellinfo .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
 .flows{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
@@ -642,6 +649,7 @@ function respond(text, role) {
       pSteps: ['Dokter menilai apakah Anda perlu diuji.', 'Patch ditempel pada kulit dan dibiarkan sesuai petunjuk dokter.', 'Tenaga kesehatan membaca reaksi kulit.', 'Dokter menjelaskan hasil dan langkah berikutnya.'],
       tSteps: ['Dokter menilai apakah Anda kandidat.', 'Tablet diletakkan di bawah lidah sesuai jadwal dari dokter.', 'Kontrol berkala untuk memantau respons dan keluhan.', 'Dokter menentukan untuk lanjut, mengubah, atau menghentikan.'],
       flowNote: 'Urutan sebenarnya mengikuti petunjuk dokter dan protokol tim klinis.',
+      bkTitle: 'Booklet untuk dibawa pulang', bkLead: 'Ringkasan 20 halaman: alergi, cara membaca hasil uji patch, dan desensitisasi sublingual.', bkBtn: 'Unduh booklet (PDF)',
       dimW: '2 cm', dimH: '5 cm', dimD: 'Ø 7 mm',
       qTitle: 'Kuis singkat', qOf: 'Pertanyaan', next: 'Lanjut', finish: 'Lihat hasil', again: 'Ulangi kuis', toAsk: 'Tanya lebih lanjut',
       right: 'Tepat.', wrong: 'Belum tepat.', result: 'Skor Anda',
@@ -700,6 +708,7 @@ function respond(text, role) {
       pSteps: ['A doctor decides whether you need testing.', 'The patch is placed on the skin and left as the doctor instructs.', 'A healthcare professional reads the skin reaction.', 'The doctor explains the result and the next step.'],
       tSteps: ['A doctor decides whether you are a candidate.', 'The tablet is placed under the tongue on the schedule the doctor gives.', 'Regular check-ups monitor response and complaints.', 'The doctor decides to continue, adjust or stop.'],
       flowNote: 'The actual sequence follows your doctor and the clinical team protocol.',
+      bkTitle: 'Booklet to take home', bkLead: 'A 20-page summary: allergy basics, how to read patch test results, and sublingual desensitisation.', bkBtn: 'Download the booklet (PDF)',
       dimW: '2 cm', dimH: '5 cm', dimD: 'Ø 7 mm',
       qTitle: 'Quick quiz', qOf: 'Question', next: 'Next', finish: 'See result', again: 'Retake quiz', toAsk: 'Ask more',
       right: 'Correct.', wrong: 'Not quite.', result: 'Your score',
@@ -1048,6 +1057,29 @@ function respond(text, role) {
     flows.appendChild(stepsCard(t('tabletFlow'), t('tSteps')));
     root.appendChild(flows);
     root.appendChild(el('p', 'note', t('flowNote')));
+    const bk = el('div', 'card bk');
+    const thumb = el('div', 'thumb');
+    const cover = document.createElement('img');
+    cover.src = '/images/booklet-cover.webp';
+    cover.alt = '';
+    cover.loading = 'lazy';
+    cover.decoding = 'async';
+    thumb.appendChild(cover);
+    bk.appendChild(thumb);
+    const tbox = el('div', 't');
+    tbox.appendChild(el('h3', null, t('bkTitle')));
+    tbox.appendChild(el('p', null, t('bkLead')));
+    const dl = document.createElement('a');
+    dl.className = 'btn-fill';
+    dl.style.display = 'inline-block';
+    dl.href = '/dokumen/booklet-alergi-ringan.pdf';
+    dl.setAttribute('download', '');
+    dl.target = '_blank';
+    dl.rel = 'noopener';
+    dl.textContent = t('bkBtn');
+    tbox.appendChild(dl);
+    bk.appendChild(tbox);
+    root.appendChild(bk);
   }
 
   /* ---------- Kuis ---------- */

@@ -40,6 +40,9 @@ check /images/patch-samping.webp 200
 check /images/patch-miring.webp 200
 check /images/detail-makro.webp 200
 check /images/cta-gelap.webp 200
+check /images/booklet-cover.webp 200
+check /images/qr-booklet.png 200
+check /dokumen/booklet-alergi-ringan.pdf 200
 check /expo/ 200
 check /expo/index.html 200
 check /halaman-tidak-ada 404
@@ -53,6 +56,8 @@ need = ['<!DOCTYPE html>', '<html lang="id">', 'width=device-width',
         'Kit Diagnostik Alergi Berbasis Patch Transdermal',
         'Sepuluh jenis ekstrak alergen', 'Tim inventor', 'Junaidi Khotib',
         'PT Bio Farma', 'CD209', 'validasi klinis',
+        'id="booklet"', 'Dari Gejala ke Toleransi',
+        'dokumen/booklet-alergi-ringan.pdf',
         'rel="canonical"', 'application/ld+json', '[hidden] { display: none !important; }']
 ban = ['Tablet sublingual', 'SLIT', 'Grand View', 'Panel alergen',
        'HPMC', 'Mordor', 'tablet.webp']
@@ -71,7 +76,8 @@ h = open('/tmp/alergen-expo.html', encoding='utf-8').read()
 need = ['<html lang="id">', 'width=device-width', 'noindex,nofollow',
         'Alergen Expo', 'Mode suara', 'Patch diagnostik Alergen',
         'IDS000011522', 'function respond', 'MIN_COV', 'Kuis singkat',
-        'Panel tim', 'speechSynthesis', 'webkitSpeechRecognition', 'localStorage', 'window.__expo', 'splitClauses']
+        'Panel tim', 'speechSynthesis', 'webkitSpeechRecognition', 'localStorage', 'window.__expo', 'splitClauses',
+        'Booklet untuk dibawa pulang', 'dokumen/booklet-alergi-ringan.pdf']
 ban = ['http://cdn', 'unpkg.com', 'cdn.jsdelivr.net']
 missing = [n for n in need if n not in h]
 found = [b for b in ban if b in h]
@@ -79,6 +85,21 @@ print("  ok   expo shell + engine" if not missing and not found
       else f"  FAIL missing: {missing}; banned present: {found}")
 sys.exit(1 if missing or found else 0)
 PY
+
+echo "==> booklet pdf integrity"
+curl -sI "http://127.0.0.1:$PORT/dokumen/booklet-alergi-ringan.pdf" | tr -d '\r' > /tmp/alergen-pdf-head
+ct=$(awk -F': ' 'tolower($1)=="content-type"{print $2}' /tmp/alergen-pdf-head)
+sz=$(curl -s -o /tmp/alergen-booklet.pdf -w '%{size_download}' "http://127.0.0.1:$PORT/dokumen/booklet-alergi-ringan.pdf")
+magic=$(head -c 5 /tmp/alergen-booklet.pdf)
+case "$ct" in
+  application/pdf*) printf "  ok   content-type %s\n" "$ct" ;;
+  *) printf "  FAIL content-type got=%s\n" "$ct"; fail=1 ;;
+esac
+if [ "$magic" = "%PDF-" ] && [ "${sz:-0}" -gt 7000000 ]; then
+  printf "  ok   pdf bytes %s, magic %s\n" "$sz" "$magic"
+else
+  printf "  FAIL pdf bytes=%s magic=%s\n" "$sz" "$magic"; fail=1
+fi
 
 echo "==> permission policy (voice mode needs microphone=self)"
 for p in / /expo/; do
